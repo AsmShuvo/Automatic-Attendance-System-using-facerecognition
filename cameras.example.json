@@ -1,0 +1,7 @@
+[
+  { "name": "front-left",  "source": "rtsp://user:pass@192.168.1.21:554/Streaming/Channels/101" },
+  { "name": "front-right", "source": "rtsp://user:pass@192.168.1.22:554/Streaming/Channels/101" },
+  { "name": "back-left",   "source": "rtsp://user:pass@192.168.1.23:554/Streaming/Channels/101" },
+  { "name": "back-right",  "source": "rtsp://user:pass@192.168.1.24:554/Streaming/Channels/101" },
+  { "name": "laptop-cam",  "source": 1 }
+]

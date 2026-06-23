@@ -50,7 +50,25 @@ CAMERA_SOURCE="rtsp://user:pass@192.168.1.64:554/Streaming/Channels/101" \
   AUTO=1 python attendance.py
 ```
 
-All recognition output goes to `attendance.csv` (`regno, date, time`).
+### Multiple cameras (cover a whole classroom)
+
+Copy the example config and list your cameras:
+
+```bash
+cp cameras.example.json cameras.json   # then edit with your RTSP URLs
+python multicam_attendance.py
+```
+
+One thread per camera, all sharing the loaded model. Scans are staggered across
+the interval to spread CPU load. Results are merged by registration number in
+one CSV — a student seen by **any** camera is marked present, and a student seen
+by two cameras in the same cycle is logged only once. All feeds show as tiles in
+one window; press **q** to quit.
+
+When `cameras.json` exists, the backend's **Start Attendance** button launches
+this multi-camera capture automatically instead of the single-camera one.
+
+All recognition output goes to `attendance.csv` (`regno, date, time[, camera]`).
 
 ## Adding people
 

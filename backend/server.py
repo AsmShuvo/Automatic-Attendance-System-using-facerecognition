@@ -28,6 +28,8 @@ from flask_cors import CORS
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_PATH = os.path.join(ROOT, "attendance.csv")
 ATTENDANCE_SCRIPT = os.path.join(ROOT, "attendance.py")
+MULTICAM_SCRIPT = os.path.join(ROOT, "multicam_attendance.py")
+CAMERAS_CONFIG = os.path.join(ROOT, "cameras.json")
 
 INTERVAL = os.environ.get("INTERVAL", "15")          # seconds between scans
 CAMERA_INDEX = os.environ.get("CAMERA_INDEX", "1")   # real webcam node
@@ -68,10 +70,12 @@ def start():
         env["CAMERA_SOURCE"] = CAMERA_SOURCE
     env.setdefault("DISPLAY", ":0")  # ensure the window has a display
 
+    # Multi-camera (cameras.json present) or single-camera capture.
+    script = MULTICAM_SCRIPT if os.path.exists(CAMERAS_CONFIG) else ATTENDANCE_SCRIPT
     log = open(os.path.join(ROOT, "capture.log"), "w")
     try:
         proc = subprocess.Popen(
-            [sys.executable, ATTENDANCE_SCRIPT],
+            [sys.executable, script],
             cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT,
         )
     except Exception as e:

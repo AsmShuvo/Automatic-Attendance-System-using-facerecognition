@@ -1,0 +1,4 @@
+[
+  { "name": "samsung",  "source": "http://192.168.0.103:8080/video" },
+  { "name": "realme", "source": "http://192.168.0.104:8080/video" }
+]
