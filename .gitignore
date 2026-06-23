@@ -1,0 +1,32 @@
+# Python virtual environment
+venv/
+.venv/
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Generated attendance data
+attendance.csv
+
+# Logs from setup / runtime
+*.log
+install.log
+verify.log
+app.log
+
+# Scratch / notes
+run.txt
+
+# InsightFace downloads the model pack to ~/.insightface (outside the repo),
+# but ignore any local copy just in case.
+models/
+*.onnx
+*.zip
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

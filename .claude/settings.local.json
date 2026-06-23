@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip3 --version)",
+      "Bash(python3 -m venv venv)",
+      "Bash(echo \"venv-exit:$?\")",
+      "Bash(pkill -f attendance.py)"
+    ]
+  }
+}
