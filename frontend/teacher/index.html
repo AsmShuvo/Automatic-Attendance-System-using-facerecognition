@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher Dashboard · Smart Attendance</title>
+  <link rel="stylesheet" href="../shared/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Smart Attendance <span class="role">· Teacher Dashboard</span></h1>
+    </div>
+    <nav>
+      <a href="../student/index.html">Student view →</a>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <!-- A. Camera Stream & Controls -->
+    <section class="card">
+      <h2>Live Session</h2>
+      <p class="hint">Start the camera to begin face-recognition attendance. Stop it to end the session (replaces pressing “q” in the terminal).</p>
+
+      <div class="row" style="margin-bottom:14px;">
+        <div>
+          <label for="sessionMinutes">Session length (minutes)</label>
+          <input type="number" id="sessionMinutes" value="60" min="1" />
+        </div>
+        <div>
+          <label>Status</label>
+          <span class="status-pill"><span class="dot off" id="statusDot"></span><span id="statusText">Idle</span></span>
+        </div>
+        <div>
+          <label>Elapsed</label>
+          <div class="timer" id="timer">00:00:00</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <button class="start" id="startBtn">▶ Start Attendance</button>
+        <button class="stop" id="stopBtn" disabled>■ Stop Attendance</button>
+      </div>
+
+      <p class="hint" style="margin-top:14px;">The face-capture window opens on the server machine's screen. Recognition and CSV logging happen there; the dashboard just starts/stops it and builds the report.</p>
+      <div class="toast" id="camToast"></div>
+    </section>
+
+    <!-- B. Session Report Generation -->
+    <section class="card">
+      <h2>Session Report</h2>
+      <p class="hint">When a session ends the attendance CSV is processed into a per-student report. You can also load a CSV manually.</p>
+
+      <div class="row" style="margin-bottom:12px;">
+        <button class="ghost" id="fetchCsvBtn">Load CSV from server</button>
+        <span class="muted">or</span>
+        <input type="file" id="csvFile" accept=".csv,text/csv" />
+        <button id="generateBtn">Generate Report</button>
+      </div>
+
+      <div id="reportArea" style="display:none;">
+        <table id="reportTable">
+          <thead>
+            <tr>
+              <th>Reg No</th>
+              <th>Enter Time</th>
+              <th>Leave Time</th>
+              <th>Total Duration</th>
+              <th>Mark</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="row" style="margin-top:16px;">
+          <button id="downloadBtn">⬇ Download Report (CSV)</button>
+          <button class="ghost" id="publishBtn">Publish to Student View</button>
+          <span class="muted" id="reportMeta"></span>
+        </div>
+      </div>
+      <div class="toast" id="reportToast"></div>
+    </section>
+
+    <!-- C. Report Delivery (Email Mockup) -->
+    <section class="card">
+      <h2>Send Report</h2>
+      <p class="hint">Email the report to the teacher. (Frontend only — the email backend will be added later.)</p>
+      <div class="row">
+        <div>
+          <label for="teacherEmail">Teacher email</label>
+          <input type="email" id="teacherEmail" placeholder="teacher@school.edu" />
+        </div>
+        <button id="sendBtn" style="align-self:flex-end;">✉ Send Report</button>
+      </div>
+      <div class="toast" id="emailToast"></div>
+    </section>
+
+  </main>
+
+  <script src="../shared/api.js"></script>
+  <script src="../shared/report.js"></script>
+  <script src="teacher.js"></script>
+</body>
+</html>

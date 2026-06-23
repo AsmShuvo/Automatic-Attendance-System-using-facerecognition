@@ -4,7 +4,13 @@
       "Bash(pip3 --version)",
       "Bash(python3 -m venv venv)",
       "Bash(echo \"venv-exit:$?\")",
-      "Bash(pkill -f attendance.py)"
+      "Bash(pkill -f attendance.py)",
+      "Bash(node -e ' *)",
+      "Bash(curl -s http://localhost:8000/api/attendance/status)",
+      "Bash(curl -s -X POST http://localhost:8000/api/attendance/start -H \"Content-Type: application/json\" -d '{\"session_minutes\":60}')",
+      "Bash(curl -s -X POST http://localhost:8000/api/attendance/stop)",
+      "Bash(pkill -f \"backend/server.py\")",
+      "Bash(ps -eo pid,cmd)"
     ]
   }
 }

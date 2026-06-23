@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Dashboard · Smart Attendance</title>
+  <link rel="stylesheet" href="../shared/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Smart Attendance <span class="role">· Student Dashboard</span></h1>
+    </div>
+    <nav>
+      <a href="../teacher/index.html">Teacher view →</a>
+    </nav>
+  </header>
+
+  <main class="container">
+
+    <section class="card">
+      <h2>My Attendance</h2>
+      <p class="hint">View-only. Enter your registration number to see your record for the latest published session.</p>
+      <div class="row">
+        <div>
+          <label for="regInput">Registration number</label>
+          <input type="text" id="regInput" placeholder="e.g. 2020331070" />
+        </div>
+        <button id="lookupBtn" style="align-self:flex-end;">Look up</button>
+        <button class="ghost" id="refreshBtn" style="align-self:flex-end;">Refresh</button>
+      </div>
+      <div class="toast" id="toast"></div>
+    </section>
+
+    <section class="card" id="myCard" style="display:none;">
+      <h2 id="myTitle">Record</h2>
+      <div class="grid-2">
+        <div>
+          <label>Enter time</label>
+          <div class="timer" id="myEnter">–</div>
+        </div>
+        <div>
+          <label>Leave time</label>
+          <div class="timer" id="myLeave">–</div>
+        </div>
+        <div>
+          <label>Total duration</label>
+          <div class="timer" id="myDuration">–</div>
+        </div>
+        <div>
+          <label>Attendance mark</label>
+          <div id="myMark">–</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Class Summary</h2>
+      <p class="hint">Everyone in the latest published session (read-only).</p>
+      <table id="summaryTable">
+        <thead>
+          <tr><th>Reg No</th><th>Enter</th><th>Leave</th><th>Duration</th><th>Mark</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="toast" id="summaryToast"></div>
+    </section>
+
+  </main>
+
+  <script src="../shared/report.js"></script>
+  <script src="student.js"></script>
+</body>
+</html>

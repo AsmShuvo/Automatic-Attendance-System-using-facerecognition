@@ -1,0 +1,122 @@
+/* Shared styling for the Smart Attendance frontend (teacher + student). */
+:root {
+  --bg: #0f172a;
+  --panel: #1e293b;
+  --panel-2: #273449;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --green: #22c55e;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --border: #334155;
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.topbar h1 { font-size: 1.15rem; margin: 0; }
+.topbar .role { color: var(--muted); font-size: 0.85rem; }
+.topbar nav a { color: var(--accent); text-decoration: none; margin-left: 16px; font-size: 0.9rem; }
+
+.container { max-width: 1080px; margin: 0 auto; padding: 24px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.card h2 { margin: 0 0 4px; font-size: 1.05rem; }
+.card .hint { color: var(--muted); font-size: 0.85rem; margin: 0 0 16px; }
+
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+button {
+  font: inherit;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  cursor: pointer;
+  color: #04111f;
+  background: var(--accent);
+  font-weight: 600;
+  transition: opacity 0.15s, transform 0.05s;
+}
+button:hover { opacity: 0.9; }
+button:active { transform: translateY(1px); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button.start { background: var(--green); }
+button.stop { background: var(--red); color: #fff; }
+button.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+
+input[type="text"], input[type="email"], input[type="number"] {
+  font: inherit;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-width: 220px;
+}
+label { font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 4px; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+.dot.live { background: var(--green); box-shadow: 0 0 0 4px rgba(34,197,94,0.2); }
+.dot.off { background: var(--red); }
+
+.preview {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 4 / 3;
+  background: #000;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  object-fit: contain;
+  margin-top: 12px;
+}
+
+table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.9rem; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 600; }
+tr:hover td { background: var(--panel-2); }
+
+.badge { padding: 3px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+.badge.full { background: rgba(34,197,94,0.15); color: var(--green); }
+.badge.partial { background: rgba(245,158,11,0.15); color: var(--amber); }
+
+.toast { color: var(--muted); font-size: 0.85rem; margin-top: 10px; min-height: 1.2em; }
+.toast.ok { color: var(--green); }
+.toast.err { color: var(--red); }
+
+.muted { color: var(--muted); }
+.timer { font-variant-numeric: tabular-nums; font-size: 1.4rem; font-weight: 700; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 760px) { .grid-2 { grid-template-columns: 1fr; } }
