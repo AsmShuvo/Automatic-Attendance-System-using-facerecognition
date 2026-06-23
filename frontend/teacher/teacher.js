@@ -115,13 +115,11 @@
     tbody.innerHTML = "";
     for (const r of report.rows) {
       const tr = document.createElement("tr");
-      const full = r.attendance_mark === 1;
       tr.innerHTML = `
         <td>${r.regno}</td>
         <td>${r.enter_time}</td>
         <td>${r.leave_time}</td>
-        <td>${r.total_attend_duration}</td>
-        <td><span class="badge ${full ? "full" : "partial"}">${r.attendance_mark} · ${full ? "Full" : "Partial"}</span></td>`;
+        <td>${r.total_attend_duration}</td>`;
       tbody.appendChild(tr);
     }
     $("reportArea").style.display = "block";

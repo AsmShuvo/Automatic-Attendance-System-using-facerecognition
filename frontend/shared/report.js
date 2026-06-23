@@ -100,12 +100,11 @@
       "enter_time",
       "leave_time",
       "total_attend_duration",
-      "attendance_mark",
     ];
     const lines = [header.join(",")];
     for (const r of report.rows) {
       lines.push(
-        [r.regno, r.enter_time, r.leave_time, r.total_attend_duration, r.attendance_mark].join(",")
+        [r.regno, r.enter_time, r.leave_time, r.total_attend_duration].join(",")
       );
     }
     return lines.join("\n");
