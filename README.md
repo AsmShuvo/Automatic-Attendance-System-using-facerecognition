@@ -54,8 +54,24 @@ All recognition output goes to `attendance.csv` (`regno, date, time`).
 
 ## Adding people
 
-Drop a clear, front-facing photo into `images/` named `<regno>.png`
-(`.jpg`, `.jpeg`, `.bmp`, `.webp` also work). One face per photo. Restart the app.
+Create a sub-folder per student, named by registration number, and drop one or
+more clear photos of them inside:
+
+```
+images/
+  2020331070/
+    1.png
+    2.png
+    ...
+  2020331072/
+    a.jpg
+    b.jpg
+```
+
+More photos per student (different angles/lighting) = more reliable recognition.
+A face is matched to a student if it's similar to *any* of their photos. One
+face per photo is best. File extensions don't matter (images are read by
+content), but one image = one face. Restart the app after adding people.
 
 ## Tuning
 

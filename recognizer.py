@@ -1,19 +1,21 @@
-"""Shared face-recognition logic built on InsightFace (ArcFace, ResNet-100).
+"""Shared face-recognition logic built on InsightFace (ArcFace, ResNet-50).
 
-Loads reference photos from the images/ folder (filenames are registration
-numbers), computes a 512-D ArcFace embedding for each, and exposes a matcher
-that turns a webcam frame into the best-matching registration number.
+Reference photos live in images/<regno>/ : one sub-folder per student, named by
+registration number, holding one or more photos of that student. Every photo is
+turned into a 512-D ArcFace embedding; a face matches a student if it is similar
+to ANY of that student's photos. (Single loose files images/<regno>.jpg are also
+still supported for backward compatibility.)
 """
 from __future__ import annotations
 
-import glob
 import os
 from dataclasses import dataclass
 
+import cv2
 import numpy as np
 from insightface.app import FaceAnalysis
 
-# Directory holding one reference photo per person, named <regno>.<ext>.
+# Directory holding one sub-folder per person, named by registration number.
 IMAGES_DIR = os.path.join(os.path.dirname(__file__), "images")
 
 # Cosine-similarity threshold. ArcFace embeddings are L2-normalised, so this is
@@ -37,39 +39,67 @@ class FaceRecognizer:
             name="buffalo_l", providers=["CPUExecutionProvider"]
         )
         self.app.prepare(ctx_id=0, det_size=(det_size, det_size))
-        self.known: dict[str, np.ndarray] = {}
+        # regno -> list of reference embeddings (one per usable photo).
+        self.known: dict[str, list[np.ndarray]] = {}
+
+    def _embed_file(self, path: str) -> np.ndarray | None:
+        """Read an image file (by content, ignoring extension) and embed the
+        largest face in it. Returns None if unreadable or no face found."""
+        img = cv2.imread(path)
+        if img is None:
+            return None  # not a decodable image
+        faces = self.app.get(img)
+        if not faces:
+            return None
+        face = max(faces, key=lambda f: _area(f.bbox))
+        return _normalize(face.embedding)
 
     def load_known_faces(self) -> list[str]:
-        """Embed every image in IMAGES_DIR. Returns the reg numbers loaded."""
-        paths = sorted(
-            p
-            for ext in ("png", "jpg", "jpeg", "bmp", "webp")
-            for p in glob.glob(os.path.join(IMAGES_DIR, f"*.{ext}"))
-        )
-        loaded = []
-        for path in paths:
-            regno = os.path.splitext(os.path.basename(path))[0]
-            import cv2
+        """Embed every student's photos. Returns the reg numbers loaded.
 
-            img = cv2.imread(path)
-            if img is None:
-                print(f"  ! could not read {path}, skipping")
-                continue
-            faces = self.app.get(img)
-            if not faces:
-                print(f"  ! no face found in {regno}, skipping")
-                continue
-            # If a reference photo has several faces, keep the largest one.
-            face = max(faces, key=lambda f: _area(f.bbox))
-            self.known[regno] = _normalize(face.embedding)
-            loaded.append(regno)
+        Layout: images/<regno>/<photo>...  (multiple photos per student).
+        A loose file images/<regno>.<ext> is also accepted as a 1-photo student.
+        """
+        loaded = []
+        for entry in sorted(os.listdir(IMAGES_DIR)):
+            full = os.path.join(IMAGES_DIR, entry)
+
+            if os.path.isdir(full):
+                regno = entry
+                embeddings = []
+                for fname in sorted(os.listdir(full)):
+                    fpath = os.path.join(full, fname)
+                    if not os.path.isfile(fpath):
+                        continue
+                    emb = self._embed_file(fpath)
+                    if emb is None:
+                        print(f"  ! {regno}/{fname}: unreadable or no face, skipping")
+                    else:
+                        embeddings.append(emb)
+                if embeddings:
+                    self.known[regno] = embeddings
+                    loaded.append(regno)
+                    print(f"  + {regno}: {len(embeddings)} reference photo(s)")
+                else:
+                    print(f"  ! {regno}: no usable photos, skipping")
+
+            elif os.path.isfile(full):  # backward-compat: images/<regno>.<ext>
+                regno = os.path.splitext(entry)[0]
+                emb = self._embed_file(full)
+                if emb is not None:
+                    self.known.setdefault(regno, []).append(emb)
+                    if regno not in loaded:
+                        loaded.append(regno)
         return loaded
 
     def _match_embedding(self, emb: np.ndarray) -> Match:
-        """Best known match for one (already L2-normalised) embedding."""
+        """Best known match for one (already L2-normalised) embedding.
+
+        A student's score is the MAX cosine similarity over all their reference
+        photos, so any matching photo is enough to recognise them."""
         best_regno, best_score = None, -1.0
-        for regno, known_emb in self.known.items():
-            score = float(np.dot(emb, known_emb))  # cosine (both normalised)
+        for regno, ref_embs in self.known.items():
+            score = max(float(np.dot(emb, ref)) for ref in ref_embs)
             if score > best_score:
                 best_regno, best_score = regno, score
         if best_score >= MATCH_THRESHOLD:
