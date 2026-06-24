@@ -34,7 +34,7 @@ CSV_PATH = os.path.join(ROOT, "attendance.csv")
 CSV_HEADER = ["regno", "date", "time", "camera"]
 CONFIG_PATH = os.environ.get("CAMERAS_CONFIG", os.path.join(ROOT, "cameras.json"))
 
-INTERVAL = float(os.environ.get("INTERVAL", "15"))  # seconds between scans
+INTERVAL = float(os.environ.get("INTERVAL", "5"))  # seconds between scans
 TILE_W, TILE_H = 480, 360
 
 stop_event = threading.Event()

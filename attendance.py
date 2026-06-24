@@ -31,7 +31,7 @@ CSV_HEADER = ["regno", "date", "time"]
 
 # AUTO=1 turns on hands-free scanning; INTERVAL is the seconds between scans.
 AUTO = os.environ.get("AUTO", "0").lower() not in ("0", "", "false", "no")
-INTERVAL = float(os.environ.get("INTERVAL", "15"))
+INTERVAL = float(os.environ.get("INTERVAL", "5"))
 
 # Camera source. Three ways to choose one (first match wins):
 #   - a USB webcam index:   CAMERA_INDEX=1 python attendance.py

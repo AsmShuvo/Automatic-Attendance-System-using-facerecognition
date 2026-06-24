@@ -31,7 +31,7 @@ ATTENDANCE_SCRIPT = os.path.join(ROOT, "attendance.py")
 MULTICAM_SCRIPT = os.path.join(ROOT, "multicam_attendance.py")
 CAMERAS_CONFIG = os.path.join(ROOT, "cameras.json")
 
-INTERVAL = os.environ.get("INTERVAL", "15")          # seconds between scans
+INTERVAL = os.environ.get("INTERVAL", "5")           # seconds between scans
 CAMERA_INDEX = os.environ.get("CAMERA_INDEX", "1")   # real webcam node
 CAMERA_SOURCE = os.environ.get("CAMERA_SOURCE")      # optional CCTV/RTSP url
 

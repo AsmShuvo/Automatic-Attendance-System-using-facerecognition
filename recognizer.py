@@ -9,6 +9,7 @@ still supported for backward compatibility.)
 from __future__ import annotations
 
 import os
+import pickle
 from dataclasses import dataclass
 
 import cv2
@@ -17,6 +18,11 @@ from insightface.app import FaceAnalysis
 
 # Directory holding one sub-folder per person, named by registration number.
 IMAGES_DIR = os.path.join(os.path.dirname(__file__), "images")
+
+# On-disk cache of photo embeddings so startup doesn't re-embed every image
+# each run. Keyed by file path + mtime + size, so editing/adding a photo
+# transparently invalidates just that entry.
+CACHE_PATH = os.path.join(os.path.dirname(__file__), ".embeddings_cache.pkl")
 
 # Cosine-similarity threshold. ArcFace embeddings are L2-normalised, so this is
 # a cosine score in [-1, 1]. ~0.35-0.45 is the usual same-person cutoff; raise
@@ -41,18 +47,57 @@ class FaceRecognizer:
         self.app.prepare(ctx_id=0, det_size=(det_size, det_size))
         # regno -> list of reference embeddings (one per usable photo).
         self.known: dict[str, list[np.ndarray]] = {}
+        # path|mtime|size -> embedding (or None if that file had no usable face).
+        self._cache: dict = self._load_cache()
+        self._cache_dirty = False
+
+    @staticmethod
+    def _file_key(path: str) -> str:
+        st = os.stat(path)
+        return f"{path}|{int(st.st_mtime)}|{st.st_size}"
+
+    @staticmethod
+    def _load_cache() -> dict:
+        try:
+            with open(CACHE_PATH, "rb") as f:
+                return pickle.load(f)
+        except Exception:
+            return {}
+
+    def _save_cache(self) -> None:
+        if not self._cache_dirty:
+            return
+        try:
+            with open(CACHE_PATH, "wb") as f:
+                pickle.dump(self._cache, f)
+            self._cache_dirty = False
+        except Exception as e:
+            print(f"  ! could not write embedding cache: {e}")
 
     def _embed_file(self, path: str) -> np.ndarray | None:
-        """Read an image file (by content, ignoring extension) and embed the
-        largest face in it. Returns None if unreadable or no face found."""
+        """Embed the largest face in an image file, using the on-disk cache when
+        the file is unchanged. Returns None if unreadable or no face found."""
+        try:
+            key = self._file_key(path)
+        except OSError:
+            key = None
+        if key is not None and key in self._cache:
+            return self._cache[key]  # cached hit (may be a cached None)
+
         img = cv2.imread(path)
         if img is None:
-            return None  # not a decodable image
-        faces = self.app.get(img)
-        if not faces:
-            return None
-        face = max(faces, key=lambda f: _area(f.bbox))
-        return _normalize(face.embedding)
+            emb = None  # not a decodable image
+        else:
+            faces = self.app.get(img)
+            if faces:
+                face = max(faces, key=lambda f: _area(f.bbox))
+                emb = _normalize(face.embedding)
+            else:
+                emb = None
+        if key is not None:
+            self._cache[key] = emb
+            self._cache_dirty = True
+        return emb
 
     def load_known_faces(self) -> list[str]:
         """Embed every student's photos. Returns the reg numbers loaded.
@@ -90,6 +135,7 @@ class FaceRecognizer:
                     self.known.setdefault(regno, []).append(emb)
                     if regno not in loaded:
                         loaded.append(regno)
+        self._save_cache()  # write any newly-computed embeddings for next run
         return loaded
 
     def _match_embedding(self, emb: np.ndarray) -> Match:
