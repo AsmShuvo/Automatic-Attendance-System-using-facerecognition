@@ -93,6 +93,50 @@
     return { rows, limitSec, generatedAt: new Date().toISOString() };
   }
 
+  /*
+   * Aggregate raw scans into the session report schema (requirement.md §2-3):
+   * one entry per regno with the first (startTime) and last (endTime) detection.
+   *
+   *   scans : output of parseCsv()  -> [{ regno, date, time }]
+   *   meta  : { course, room }
+   * Returns:
+   *   { classid, courseName, room, savedAt, attendance: [
+   *       { regno, date, startTime, endTime }, ... ] }
+   */
+  function aggregate(scans, meta = {}) {
+    const byStudent = new Map();
+    for (const r of scans) {
+      const sec = timeToSec(r.time);
+      if (sec === null) continue;
+      const cur = byStudent.get(r.regno);
+      if (!cur) {
+        byStudent.set(r.regno, { regno: r.regno, date: r.date, min: sec, max: sec });
+      } else {
+        if (sec < cur.min) cur.min = sec;
+        if (sec > cur.max) cur.max = sec;
+      }
+    }
+
+    const attendance = [...byStudent.values()]
+      .sort((a, b) => a.min - b.min || a.regno.localeCompare(b.regno))
+      .map((s) => ({
+        regno: s.regno,
+        date: s.date,
+        startTime: secToHMS(s.min),
+        endTime: secToHMS(s.max),
+      }));
+
+    // classid = room_course_date_earliestStartTime  (e.g. 303_CSE101_2026-06-24_14:05:15)
+    const first = attendance[0];
+    const date = first ? first.date : "";
+    const startStamp = first ? first.startTime : "";
+    const course = meta.course || "";
+    const room = meta.room || "";
+    const classid = [room, course, date, startStamp].filter(Boolean).join("_");
+
+    return { classid, courseName: course, room, savedAt: new Date().toISOString(), attendance };
+  }
+
   // Report object -> clean CSV string (the downloadable/Excel-openable report).
   function toCsv(report) {
     const header = [
@@ -135,6 +179,7 @@
   window.Report = {
     parseCsv,
     buildReport,
+    aggregate,
     toCsv,
     download,
     publish,

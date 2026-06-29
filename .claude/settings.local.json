@@ -21,7 +21,22 @@
       "Bash(timeout 90 venv/bin/python -c ' *)",
       "Bash(timeout 70 venv/bin/python -c ' *)",
       "Bash(timeout 120 venv/bin/python -c ' *)",
-      "Bash(timeout 60 venv/bin/python -c ' *)"
+      "Bash(timeout 60 venv/bin/python -c ' *)",
+      "Bash(venv/bin/python -c \"import ast; ast.parse\\(open\\('backend/server.py'\\).read\\(\\)\\); print\\('server.py OK'\\)\")",
+      "Bash(:)",
+      "Bash(nohup venv/bin/python backend/server.py)",
+      "Bash(curl -s -m 5 -X POST http://localhost:8000/api/report/save -H 'Content-Type: application/json' -d '{ *)",
+      "Bash(curl -s -m 5 http://localhost:8000/api/report/latest)",
+      "Bash(curl -s -m 3 -o /dev/null -w \"status HTTP %{http_code}\\\\n\" http://localhost:8000/api/attendance/status)",
+      "Bash(curl -s -m 5 -X POST http://localhost:8000/api/report/save -H 'Content-Type: application/json' -d '{\"classid\":\"303_CSE101_2026-06-24_14:05:15\",\"courseName\":\"CSE101\",\"room\":\"303\",\"savedAt\":\"2026-06-24T14:30:00\",\"attendance\":[{\"regno\":\"2021331106\",\"date\":\"2026-06-24\",\"startTime\":\"14:05:15\",\"endTime\":\"14:05:25\"},{\"regno\":\"2021331079\",\"date\":\"2026-06-24\",\"startTime\":\"14:05:30\",\"endTime\":\"14:05:36\"}]}')",
+      "Bash(curl -s -m 5 -X POST http://localhost:8000/api/report/save -H 'Content-Type: application/json' -d '{\"classid\":\"303_CSE101_2026-06-24_14:05:15\",\"courseName\":\"CSE101\",\"room\":\"303\",\"attendance\":[{\"regno\":\"2021331106\",\"date\":\"2026-06-24\",\"startTime\":\"14:05:15\",\"endTime\":\"14:05:25\"}]}')",
+      "Bash(command -v node)",
+      "Bash(curl -s -m 3 http://localhost:8000/api/attendance/status)",
+      "Bash(ip -brief addr show enx00e04c363cdd)",
+      "Bash(ping -c2 -W1 10.100.32.123)",
+      "Bash(timeout 30 venv/bin/python -c ' *)",
+      "Bash(ip route *)",
+      "Bash(venv/bin/python -c \"import ast; ast.parse\\(open\\('multicam_attendance.py'\\).read\\(\\)\\); print\\('multicam_attendance.py OK'\\)\")"
     ]
   }
 }

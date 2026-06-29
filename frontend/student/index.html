@@ -3,71 +3,70 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Student Dashboard · Smart Attendance</title>
+  <title>Student · Smart Attendance</title>
   <link rel="stylesheet" href="../shared/styles.css" />
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <h1>Smart Attendance <span class="role">· Student Dashboard</span></h1>
+    <div class="brand">
+      <span class="mark">A</span>
+      <div>
+        <h1>Smart Attendance</h1>
+        <span class="role">Student View</span>
+      </div>
     </div>
     <nav>
-      <a href="../teacher/index.html">Teacher view →</a>
+      <a href="../teacher/login.html">Teacher portal →</a>
     </nav>
   </header>
 
   <main class="container">
+    <div class="page-head">
+      <h2>My attendance</h2>
+      <p>Enter your registration number to see your record for the latest session.</p>
+    </div>
 
     <section class="card">
-      <h2>My Attendance</h2>
-      <p class="hint">View-only. Enter your registration number to see your record for the latest published session.</p>
       <div class="row">
-        <div>
+        <div class="field">
           <label for="regInput">Registration number</label>
-          <input type="text" id="regInput" placeholder="e.g. 2020331070" />
+          <input type="text" id="regInput" placeholder="e.g. 2021331106" />
         </div>
-        <button id="lookupBtn" style="align-self:flex-end;">Look up</button>
-        <button class="ghost" id="refreshBtn" style="align-self:flex-end;">Refresh</button>
+        <button id="lookupBtn">Look up</button>
+        <button class="ghost" id="refreshBtn">Refresh</button>
       </div>
       <div class="toast" id="toast"></div>
     </section>
 
     <section class="card" id="myCard" style="display:none;">
+      <p class="eyebrow">Your record</p>
       <h2 id="myTitle">Record</h2>
-      <div class="grid-2">
-        <div>
-          <label>Enter time</label>
-          <div class="timer" id="myEnter">–</div>
-        </div>
-        <div>
-          <label>Leave time</label>
-          <div class="timer" id="myLeave">–</div>
-        </div>
-        <div>
-          <label>Total duration</label>
-          <div class="timer" id="myDuration">–</div>
-        </div>
-        <div>
-          <label>Attendance mark</label>
-          <div id="myMark">–</div>
-        </div>
+      <div class="grid-2" style="margin-top:14px;">
+        <div class="stat"><label>Start time</label><div class="timer" id="myStart">–</div></div>
+        <div class="stat"><label>End time</label><div class="timer" id="myEnd">–</div></div>
+        <div class="stat"><label>Duration present</label><div class="timer" id="myDuration">–</div></div>
+        <div class="stat"><label>Status</label><div id="myStatus">–</div></div>
       </div>
     </section>
 
     <section class="card">
-      <h2>Class Summary</h2>
-      <p class="hint">Everyone in the latest published session (read-only).</p>
-      <table id="summaryTable">
-        <thead>
-          <tr><th>Reg No</th><th>Enter</th><th>Leave</th><th>Duration</th><th>Mark</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <p class="eyebrow">Class summary</p>
+      <h2 id="summaryTitle">Latest session</h2>
+      <p class="hint" id="summarySub">Everyone detected in the latest saved session.</p>
+      <div id="summaryArea" style="display:none;">
+        <table id="summaryTable">
+          <thead>
+            <tr><th>Reg No</th><th>Date</th><th>Start</th><th>End</th><th>Duration</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty" id="summaryEmpty">No saved session yet.</div>
       <div class="toast" id="summaryToast"></div>
     </section>
-
   </main>
 
+  <script src="../shared/api.js"></script>
   <script src="../shared/report.js"></script>
   <script src="student.js"></script>
 </body>

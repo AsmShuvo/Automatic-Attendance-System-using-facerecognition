@@ -40,8 +40,12 @@ TILE_W, TILE_H = 480, 360
 stop_event = threading.Event()
 
 
-def open_source(source):
-    """Open an int webcam index or a URL/RTSP/HTTP stream. Returns cap or None."""
+def open_source(source, attempts=3):
+    """Open an int webcam index or a URL/RTSP/HTTP stream. Returns cap or None.
+
+    Network streams retry a few times and force RTSP-over-TCP with a connect
+    timeout, so a transient "no route to host" (link still settling, brief Wi-Fi
+    drop, camera rebooting) doesn't fail the whole session on the first try."""
     if isinstance(source, int) or (isinstance(source, str) and source.isdigit()):
         cap = cv2.VideoCapture(int(source), cv2.CAP_V4L2)
         if not cap.isOpened():
@@ -53,8 +57,20 @@ def open_source(source):
                 return cap
         cap.release()
         return None
-    cap = cv2.VideoCapture(str(source), cv2.CAP_FFMPEG)  # RTSP / HTTP / file
-    return cap if cap.isOpened() else None
+
+    # Network stream (RTSP / HTTP). Force TCP + 5s connect timeout for reliability.
+    src = str(source)
+    if src.lower().startswith("rtsp"):
+        os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|stimeout;5000000"
+    for _ in range(max(1, attempts)):
+        if stop_event.is_set():
+            break
+        cap = cv2.VideoCapture(src, cv2.CAP_FFMPEG)
+        if cap.isOpened() and cap.read()[0]:
+            return cap
+        cap.release()
+        time.sleep(1.5)
+    return None
 
 
 class SharedLogger:
@@ -95,22 +111,39 @@ class CameraWorker(threading.Thread):
         self.online = False
 
     def run(self):
-        cap = open_source(self.source)
-        if cap is None:
-            print(f"[{self.cam_name}] could not open source: {self.source}")
-            self.frames[self.cam_name] = self._offline_tile()
-            return
-        self.online = True
-        print(f"[{self.cam_name}] online")
-
         # Stagger first scan so cameras don't all hit the CPU at once.
         last_scan = time.monotonic() - INTERVAL + self.offset
         last_results = []
+        cap = None
+        fail_streak = 0
+
         while not stop_event.is_set():
+            # (Re)connect if we have no stream. Stay alive and keep retrying so a
+            # transient failure shows an OFFLINE tile instead of closing the window.
+            if cap is None:
+                self.frames.setdefault(self.cam_name, self._offline_tile("connecting…"))
+                cap = open_source(self.source, attempts=2)
+                if cap is None:
+                    self.online = False
+                    self.frames[self.cam_name] = self._offline_tile("offline — retrying")
+                    print(f"[{self.cam_name}] could not open source, retrying: {self.source}")
+                    self._sleep(3.0)
+                    continue
+                self.online = True
+                fail_streak = 0
+                print(f"[{self.cam_name}] online")
+
             ok, frame = cap.read()
             if not ok:
-                time.sleep(0.05)
+                fail_streak += 1
+                if fail_streak >= 30:  # stream dropped — drop it and reconnect
+                    print(f"[{self.cam_name}] stream lost, reconnecting…")
+                    cap.release()
+                    cap = None
+                else:
+                    time.sleep(0.05)
                 continue
+            fail_streak = 0
 
             now = time.monotonic()
             if now - last_scan >= INTERVAL:
@@ -127,7 +160,14 @@ class CameraWorker(threading.Thread):
 
             self.frames[self.cam_name] = self._annotate(frame, last_results)
 
-        cap.release()
+        if cap is not None:
+            cap.release()
+
+    def _sleep(self, seconds: float):
+        """Sleep in small slices so we react quickly to a stop request."""
+        end = time.monotonic() + seconds
+        while time.monotonic() < end and not stop_event.is_set():
+            time.sleep(0.1)
 
     def _annotate(self, frame, results):
         for face, match in results:
@@ -144,11 +184,13 @@ class CameraWorker(threading.Thread):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2, cv2.LINE_AA)
         return tile
 
-    def _offline_tile(self):
+    def _offline_tile(self, status="offline"):
         import numpy as np
         tile = np.zeros((TILE_H, TILE_W, 3), dtype="uint8")
-        cv2.putText(tile, f"{self.cam_name}: OFFLINE", (20, TILE_H // 2),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2, cv2.LINE_AA)
+        cv2.putText(tile, self.cam_name, (20, TILE_H // 2 - 16),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2, cv2.LINE_AA)
+        cv2.putText(tile, status, (20, TILE_H // 2 + 18),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2, cv2.LINE_AA)
         return tile
 
 

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in · Smart Attendance</title>
+  <link rel="stylesheet" href="../shared/styles.css" />
+</head>
+<body>
+  <div class="auth-wrap">
+    <form class="auth-card" id="loginForm" autocomplete="on">
+      <div class="brand"><span class="mark">A</span></div>
+      <h1>Smart Attendance</h1>
+      <p class="sub">Teacher portal — sign in to start a class</p>
+
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="teacher" required autofocus />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="••••••••" required />
+      </div>
+
+      <button type="submit" class="btn-block">Sign in</button>
+      <div class="toast" id="loginToast"></div>
+      <p class="auth-hint">Demo: any username & password works.</p>
+    </form>
+  </div>
+
+  <script src="../shared/auth.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

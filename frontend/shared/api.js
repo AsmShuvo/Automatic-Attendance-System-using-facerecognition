@@ -32,8 +32,9 @@
   window.AttendanceAPI = {
     base: API_BASE,
 
-    startAttendance: (sessionMinutes) =>
-      postJson("/api/attendance/start", { session_minutes: sessionMinutes }),
+    // Start a class session. course/room are recorded with the session.
+    startAttendance: ({ course, room } = {}) =>
+      postJson("/api/attendance/start", { course, room }),
 
     stopAttendance: () => postJson("/api/attendance/stop"),
 
@@ -43,8 +44,14 @@
       return res.text();
     },
 
-    // Email backend is not built yet; this is the contract for later.
-    sendReportEmail: (teacherEmail, report) =>
-      postJson("/api/report/email", { teacher_email: teacherEmail, report }),
+    // Persist the aggregated session report (-> db/db.json now, MongoDB later).
+    saveReport: (report) => postJson("/api/report/save", report),
+
+    // Most recent saved session report (for the student view).
+    async fetchLatestReport() {
+      const res = await fetch(API_BASE + "/api/report/latest");
+      if (!res.ok) throw new Error(`latest -> HTTP ${res.status}`);
+      return res.json();
+    },
   };
 })();
