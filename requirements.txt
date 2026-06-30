@@ -4,3 +4,4 @@ insightface
 onnxruntime
 flask
 flask-cors
+pymongo

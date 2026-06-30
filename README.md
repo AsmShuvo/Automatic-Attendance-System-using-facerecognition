@@ -1,97 +1,179 @@
-# Face Recognition Attendance
+# Smart Attendance System 🎓
 
-Marks attendance from your webcam using **ArcFace (ResNet-100)** via InsightFace.
-Reference photos live in `images/`, named by registration number
-(e.g. `2020331051.png`). Matches are recorded in `attendance.csv`.
+An **Automatic classroom attendance system** that recognizes students from live
+CCTV / IP cameras and records attendance automatically - no roll call, no
+fingerprint scanner, no manual entry.
 
-## Setup
+A teacher signs in --> picks a course and room --> and clicks **Start Class**. The
+system watches the room through the room's cameras, recognizes every enrolled
+student's face in real time, and produces a clean attendance report (who was
+present, when they arrived, and when they left).
+
+---
+
+## 🎥 Demo
+
+[**▶ Watch the demo video**](demoVdo/Demo.mp4) — `demoVdo/Demo.mp4`
+
+> Recognizing multiple students live from a wired Hikvision IP camera and logging
+> their attendance automatically.
+
+---
+
+## ✨ Features
+
+- **Real-time face recognition** using state-of-the-art **ArcFace** (deep learning)
+- **Recognizes many students at once** in a single camera frame
+- **Multi-camera support** — cover a whole classroom with several cameras at once,
+  shown side by side, results merged automatically
+- **Works with IP / CCTV cameras** over RTSP (Hikvision, XiongMai, etc.) and phone
+  cameras over Wi-Fi
+- **Per-room camera configuration** stored in **MongoDB** — pick a room, it opens
+  that room's cameras
+- **Web dashboard** for teachers (login → start/stop class → generate report) and
+  a read-only view for students
+- **Automatic attendance reports** aggregated per student (first seen → last seen)
+  and saved to the database
+- **Fast startup** — face embeddings are pre-computed once and cached
+
+---
+
+## 🧠 How it works
+
+```
+ IP Cameras (RTSP)                Teacher Dashboard (web)
+        │                                  │
+        ▼                                  ▼
+ ┌──────────────┐   start/stop    ┌──────────────────┐
+ │  Recognition │◀────────────────│  Flask backend    │──▶ MongoDB
+ │  (ArcFace)   │                 │  (REST API)       │   (rooms, reports)
+ └──────┬───────┘                 └──────────────────┘
+        │ every few seconds:
+        │  1. detect faces in the frame   (SCRFD)
+        │  2. turn each face into a 512-number "faceprint"  (ArcFace / ResNet-50)
+        │  3. match against enrolled students (cosine similarity)
+        ▼
+   attendance.csv  ──aggregate──▶  per-student report (start/end time) ──▶ MongoDB
+```
+
+**The model:** [InsightFace](https://github.com/deepinsight/insightface)
+`buffalo_l` pack — **SCRFD** for face detection + **ArcFace (ResNet-50)** for
+recognition, running locally on CPU via ONNX Runtime. Each student is enrolled
+from a few reference photos; a live face is recognized if it's similar enough to
+any of a student's photos.
+
+> A detailed walkthrough of the pipeline is in [`workflow.md`](workflow.md).
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Face recognition | InsightFace (ArcFace + SCRFD), ONNX Runtime, OpenCV |
+| Backend | Python, Flask, REST API |
+| Database | MongoDB (room/camera config + attendance reports) |
+| Frontend | HTML, CSS, vanilla JavaScript |
+| Cameras | RTSP / IP cameras (Hikvision, XiongMai), multi-threaded capture |
+
+---
+
+## 📁 Project structure
+
+```
+recognizer.py            Face detection + recognition engine (ArcFace)
+create_embedd.py         Build & cache student face embeddings (run once)
+multicam_attendance.py   Multi-camera live capture + recognition
+seed_rooms.py            Register rooms and their cameras in MongoDB
+backend/
+  server.py              Flask REST API (start/stop class, reports, config)
+  db.py                  MongoDB access layer
+frontend/
+  teacher/               Teacher dashboard (login, controls, reports)
+  student/               Student view (look up own attendance)
+images/<regno>/          Reference photos, one folder per student
+demoVdo/Deno.mp4         Demo video
+workflow.md              Detailed explanation of the whole pipeline
+```
+
+---
+
+## 🚀 Getting started
+
+### 1. Install
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+*(The first run downloads the `buffalo_l` model, ~300 MB, into `~/.insightface`.)*
 
-The first run downloads the `buffalo_l` model (~300 MB) into `~/.insightface`.
+### 2. Add students
 
-## Run
-
-```bash
-source venv/bin/activate
-CAMERA_INDEX=1 python attendance.py
-```
-
-`CAMERA_INDEX=1` selects the real webcam (index 0 is often a dead node).
-
-### Manual mode (default)
-
-A webcam window opens:
-
-- **SPACE** or **c** — capture the current frame and mark **everyone** recognised
-- **q** or **ESC** — quit
-
-Each person is marked at most once per day.
-
-### Auto mode (hands-free)
-
-```bash
-AUTO=1 CAMERA_INDEX=1 python attendance.py            # scan every 15s
-AUTO=1 INTERVAL=10 CAMERA_INDEX=1 python attendance.py # custom interval
-```
-
-Scans automatically every `INTERVAL` seconds (default 15) and writes a row for
-**every** recognised person each cycle — so the CSV records who was present at
-each scan time. No keypress needed; press **q** to quit.
-
-### CCTV / IP camera
-
-```bash
-CAMERA_SOURCE="rtsp://user:pass@192.168.1.64:554/Streaming/Channels/101" \
-  AUTO=1 python attendance.py
-```
-
-### Multiple cameras (cover a whole classroom)
-
-Copy the example config and list your cameras:
-
-```bash
-cp cameras.example.json cameras.json   # then edit with your RTSP URLs
-python multicam_attendance.py
-```
-
-One thread per camera, all sharing the loaded model. Scans are staggered across
-the interval to spread CPU load. Results are merged by registration number in
-one CSV — a student seen by **any** camera is marked present, and a student seen
-by two cameras in the same cycle is logged only once. All feeds show as tiles in
-one window; press **q** to quit.
-
-When `cameras.json` exists, the backend's **Start Attendance** button launches
-this multi-camera capture automatically instead of the single-camera one.
-
-All recognition output goes to `attendance.csv` (`regno, date, time[, camera]`).
-
-## Adding people
-
-Create a sub-folder per student, named by registration number, and drop one or
-more clear photos of them inside:
+Create one folder per student under `images/`, named by registration number,
+with a few clear photos inside:
 
 ```
 images/
-  2020331070/
-    1.png
-    2.png
-    ...
-  2020331072/
-    a.jpg
-    b.jpg
+  2021331106/  1.jpg  2.jpg
+  2021331079/  a.png  b.png
 ```
 
-More photos per student (different angles/lighting) = more reliable recognition.
-A face is matched to a student if it's similar to *any* of their photos. One
-face per photo is best. File extensions don't matter (images are read by
-content), but one image = one face. Restart the app after adding people.
+### 3. Build the face database (once)
 
-## Tuning
+```bash
+python create_embedd.py
+```
+This embeds every photo and saves `embeddings.pkl`. Re-run only when you add or
+change photos.
 
-`MATCH_THRESHOLD` in `recognizer.py` (default `0.40`) is the cosine-similarity
-cutoff. Raise it to reduce false matches, lower it if real faces are rejected.
+### 4. Register rooms & cameras (MongoDB)
+
+Start MongoDB, then register each room with its camera(s) — either run
+`python seed_rooms.py` (edit the rooms inside it first) or insert documents
+directly into the `attendance.rooms` collection:
+
+```json
+{ "room": "G1", "cameras": [ { "name": "cam1", "source": "rtsp://user:pass@IP:554/..." } ] }
+```
+
+### 5. Run
+
+```bash
+# Terminal 1 — backend API
+source venv/bin/activate
+python backend/server.py
+
+# Terminal 2 — web dashboard
+python3 -m http.server 5500
+```
+
+Open **`http://localhost:5500/frontend/teacher/login.html`**, sign in, pick a
+course and room, and click **Start Class**.
+
+---
+
+## ⚙️ Configuration
+
+| Setting | Default | Where |
+|---------|---------|-------|
+| Scan interval | 5 s | `INTERVAL` env var |
+| Match strictness | 0.40 | `MATCH_THRESHOLD` in `recognizer.py` |
+| Rooms & cameras | — | MongoDB `attendance.rooms` collection |
+| Detector resolution | 640×640 | `det_size` in `recognizer.py` |
+
+---
+
+## 📌 Notes
+
+- Runs fully **offline / on-device** — no cloud face API, student photos never
+  leave the machine.
+- Recognition speed depends on how many faces are *visible*, not how many students
+  are enrolled — comparing a face against hundreds of students takes milliseconds.
+- Add a GPU (`CUDAExecutionProvider`) for a large speed-up with many cameras.
+
+---
+
+*Built as a practical computer-vision project: real-time multi-face recognition,
+multi-camera streaming, a REST backend, and a database-backed web application.*

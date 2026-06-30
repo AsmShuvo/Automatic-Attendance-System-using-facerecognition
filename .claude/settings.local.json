@@ -52,7 +52,8 @@
       "Bash(venv/bin/pip install *)",
       "Bash(venv/bin/python seed_rooms.py)",
       "Bash(venv/bin/python seed_rooms.py --list)",
-      "Bash(grep -n 'FALLBACK_ROOMS\\\\|loadDropdowns\\\\|fillSelect\\(\\\\$\\(\"room\"\\)' frontend/teacher/teacher.js)"
+      "Bash(grep -n 'FALLBACK_ROOMS\\\\|loadDropdowns\\\\|fillSelect\\(\\\\$\\(\"room\"\\)' frontend/teacher/teacher.js)",
+      "Bash(venv/bin/python --version)"
     ]
   }
 }
