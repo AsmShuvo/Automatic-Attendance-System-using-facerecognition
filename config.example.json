@@ -1,0 +1,18 @@
+{
+  "_comment": "Source of truth for courses and per-room cameras. Copy to config.json and edit. config.json is gitignored because camera URLs contain passwords. Each room lists only the cameras physically in that room; selecting a room on the dashboard starts exactly those cameras.",
+  "courses": ["CSE101", "CSE205", "EEE101"],
+  "rooms": {
+    "301": {
+      "cameras": [
+        { "name": "front", "source": "rtsp://admin:PASSWORD@192.168.1.21:554/Streaming/Channels/101" },
+        { "name": "back",  "source": "rtsp://admin:PASSWORD@192.168.1.22:554/Streaming/Channels/101" }
+      ]
+    },
+    "302": {
+      "cameras": [
+        { "name": "cam1", "source": "rtsp://admin:PASSWORD@192.168.1.31:554/Streaming/Channels/101" }
+      ]
+    },
+    "Lab-1": { "cameras": [] }
+  }
+}

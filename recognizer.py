@@ -5,6 +5,10 @@ registration number, holding one or more photos of that student. Every photo is
 turned into a 512-D ArcFace embedding; a face matches a student if it is similar
 to ANY of that student's photos. (Single loose files images/<regno>.jpg are also
 still supported for backward compatibility.)
+
+Embeddings are built ONCE by create_embedd.py and saved to embeddings.pkl. At
+runtime the server just loads that file (instant) instead of re-embedding photos
+every run. Re-run create_embedd.py whenever you add or change student photos.
 """
 from __future__ import annotations
 
@@ -19,10 +23,8 @@ from insightface.app import FaceAnalysis
 # Directory holding one sub-folder per person, named by registration number.
 IMAGES_DIR = os.path.join(os.path.dirname(__file__), "images")
 
-# On-disk cache of photo embeddings so startup doesn't re-embed every image
-# each run. Keyed by file path + mtime + size, so editing/adding a photo
-# transparently invalidates just that entry.
-CACHE_PATH = os.path.join(os.path.dirname(__file__), ".embeddings_cache.pkl")
+# Permanent, prebuilt embedding database (created by create_embedd.py).
+EMBEDDINGS_PATH = os.path.join(os.path.dirname(__file__), "embeddings.pkl")
 
 # Cosine-similarity threshold. ArcFace embeddings are L2-normalised, so this is
 # a cosine score in [-1, 1]. ~0.35-0.45 is the usual same-person cutoff; raise
@@ -38,7 +40,7 @@ class Match:
 
 class FaceRecognizer:
     def __init__(self, det_size: int = 640):
-        # buffalo_l = ArcFace recognition (ResNet-100) + SCRFD detector.
+        # buffalo_l = ArcFace recognition (ResNet-50) + SCRFD detector.
         # CPUExecutionProvider keeps it dependency-light; swap in
         # CUDAExecutionProvider if you have a GPU + onnxruntime-gpu.
         self.app = FaceAnalysis(
@@ -47,65 +49,32 @@ class FaceRecognizer:
         self.app.prepare(ctx_id=0, det_size=(det_size, det_size))
         # regno -> list of reference embeddings (one per usable photo).
         self.known: dict[str, list[np.ndarray]] = {}
-        # path|mtime|size -> embedding (or None if that file had no usable face).
-        self._cache: dict = self._load_cache()
-        self._cache_dirty = False
 
-    @staticmethod
-    def _file_key(path: str) -> str:
-        st = os.stat(path)
-        return f"{path}|{int(st.st_mtime)}|{st.st_size}"
-
-    @staticmethod
-    def _load_cache() -> dict:
-        try:
-            with open(CACHE_PATH, "rb") as f:
-                return pickle.load(f)
-        except Exception:
-            return {}
-
-    def _save_cache(self) -> None:
-        if not self._cache_dirty:
-            return
-        try:
-            with open(CACHE_PATH, "wb") as f:
-                pickle.dump(self._cache, f)
-            self._cache_dirty = False
-        except Exception as e:
-            print(f"  ! could not write embedding cache: {e}")
-
+    # ------------------------------------------------------------------ #
+    # Building embeddings (used by create_embedd.py — the slow, one-time step)
+    # ------------------------------------------------------------------ #
     def _embed_file(self, path: str) -> np.ndarray | None:
-        """Embed the largest face in an image file, using the on-disk cache when
-        the file is unchanged. Returns None if unreadable or no face found."""
-        try:
-            key = self._file_key(path)
-        except OSError:
-            key = None
-        if key is not None and key in self._cache:
-            return self._cache[key]  # cached hit (may be a cached None)
-
+        """Read an image file (by content, ignoring extension) and embed the
+        largest face in it. Returns None if unreadable or no face found."""
         img = cv2.imread(path)
         if img is None:
-            emb = None  # not a decodable image
-        else:
-            faces = self.app.get(img)
-            if faces:
-                face = max(faces, key=lambda f: _area(f.bbox))
-                emb = _normalize(face.embedding)
-            else:
-                emb = None
-        if key is not None:
-            self._cache[key] = emb
-            self._cache_dirty = True
-        return emb
+            return None  # not a decodable image
+        faces = self.app.get(img)
+        if not faces:
+            return None
+        face = max(faces, key=lambda f: _area(f.bbox))
+        return _normalize(face.embedding)
 
-    def load_known_faces(self) -> list[str]:
-        """Embed every student's photos. Returns the reg numbers loaded.
+    def build_known_faces(self) -> list[str]:
+        """Embed every student's photos into self.known. Returns reg numbers.
 
         Layout: images/<regno>/<photo>...  (multiple photos per student).
         A loose file images/<regno>.<ext> is also accepted as a 1-photo student.
+        This is the expensive step — run it via create_embedd.py, not per server
+        start.
         """
-        loaded = []
+        self.known = {}
+        loaded: list[str] = []
         for entry in sorted(os.listdir(IMAGES_DIR)):
             full = os.path.join(IMAGES_DIR, entry)
 
@@ -135,9 +104,58 @@ class FaceRecognizer:
                     self.known.setdefault(regno, []).append(emb)
                     if regno not in loaded:
                         loaded.append(regno)
-        self._save_cache()  # write any newly-computed embeddings for next run
         return loaded
 
+    # ------------------------------------------------------------------ #
+    # Saving / loading the prebuilt embeddings
+    # ------------------------------------------------------------------ #
+    def save_embeddings(self, path: str = EMBEDDINGS_PATH) -> None:
+        """Persist self.known (+ a manifest of source photos) to disk."""
+        payload = {
+            "version": 1,
+            "known": self.known,
+            "manifest": _images_manifest(),
+        }
+        with open(path, "wb") as f:
+            pickle.dump(payload, f)
+
+    def load_saved_embeddings(self, path: str = EMBEDDINGS_PATH) -> dict | None:
+        """Load prebuilt embeddings into self.known. Returns the saved payload
+        (for staleness checks) or None if the file is missing/corrupt."""
+        try:
+            with open(path, "rb") as f:
+                payload = pickle.load(f)
+            self.known = payload.get("known", {})
+            return payload
+        except Exception:
+            return None
+
+    def load_known_faces(self) -> list[str]:
+        """Server entry point: load the prebuilt embeddings.pkl (instant).
+
+        Falls back to building them once (and saving) if the file is missing, so
+        the system still works if create_embedd.py hasn't been run yet — but the
+        intended flow is to run create_embedd.py once and let this just load.
+        """
+        if os.path.exists(EMBEDDINGS_PATH):
+            payload = self.load_saved_embeddings()
+            if payload is not None and self.known:
+                if _images_manifest() != payload.get("manifest"):
+                    print("  ! images/ changed since embeddings were built — "
+                          "re-run: python create_embedd.py")
+                return list(self.known)
+            print("  ! embeddings.pkl unreadable — rebuilding.")
+
+        print("  ! No embeddings.pkl found. Building once now "
+              "(tip: run 'python create_embedd.py' to control this step)…")
+        loaded = self.build_known_faces()
+        if loaded:
+            self.save_embeddings()
+        return loaded
+
+    # ------------------------------------------------------------------ #
+    # Matching (runtime)
+    # ------------------------------------------------------------------ #
     def _match_embedding(self, emb: np.ndarray) -> Match:
         """Best known match for one (already L2-normalised) embedding.
 
@@ -163,6 +181,22 @@ class FaceRecognizer:
         if not faces or not self.known:
             return [(f, Match(None, -1.0)) for f in faces]
         return [(f, self._match_embedding(_normalize(f.embedding))) for f in faces]
+
+
+def _images_manifest() -> dict:
+    """Map every file under images/ to (mtime, size) so we can detect changes."""
+    manifest = {}
+    if not os.path.isdir(IMAGES_DIR):
+        return manifest
+    for root, _, files in os.walk(IMAGES_DIR):
+        for fname in files:
+            fpath = os.path.join(root, fname)
+            try:
+                st = os.stat(fpath)
+                manifest[os.path.relpath(fpath, IMAGES_DIR)] = (int(st.st_mtime), st.st_size)
+            except OSError:
+                pass
+    return manifest
 
 
 def _normalize(v: np.ndarray) -> np.ndarray:

@@ -5,9 +5,10 @@
 
   const $ = (id) => document.getElementById(id);
 
-  // --- Config: courses & rooms (edit here to suit your institution) ------
-  const COURSES = ["CSE101", "CSE205", "CSE311", "CSE413", "EEE101", "MAT201"];
-  const ROOMS = ["301", "302", "303", "Lab-1", "Lab-2", "Auditorium"];
+  // --- Config: courses & rooms come from the backend (config.json). These are
+  //     only fallbacks shown if the backend can't be reached. -----------------
+  const FALLBACK_COURSES = ["CSE101", "CSE205", "CSE311", "CSE413", "EEE101", "MAT201"];
+  const FALLBACK_ROOMS = ["G1", "G2"];
 
   // --- State -------------------------------------------------------------
   let running = false;
@@ -23,14 +24,29 @@
 
   // --- Init UI -----------------------------------------------------------
   function fillSelect(sel, items) {
+    // keep the disabled placeholder (first option), drop the rest, then refill
+    while (sel.options.length > 1) sel.remove(1);
     for (const v of items) {
       const o = document.createElement("option");
       o.value = v; o.textContent = v;
       sel.appendChild(o);
     }
   }
-  fillSelect($("course"), COURSES);
-  fillSelect($("room"), ROOMS);
+
+  // Populate dropdowns from the backend; fall back to defaults if it's down.
+  async function loadDropdowns() {
+    let courses = FALLBACK_COURSES, rooms = FALLBACK_ROOMS;
+    try {
+      const cfg = await AttendanceAPI.fetchConfig();
+      if (cfg.courses && cfg.courses.length) courses = cfg.courses;
+      if (cfg.rooms && cfg.rooms.length) rooms = cfg.rooms;
+    } catch (_) {
+      toast($("camToast"), "Backend offline — showing default course/room list.", "");
+    }
+    fillSelect($("course"), courses);
+    fillSelect($("room"), rooms);
+  }
+  loadDropdowns();
 
   const who = Auth.current();
   $("who").textContent = who ? `Signed in as ${who.username}` : "";
@@ -75,13 +91,30 @@
     $("classLabel").textContent = `${course} · Room ${room}`;
     toast($("camToast"), "Starting session…");
 
+    let res = null, netError = false;
     try {
-      await AttendanceAPI.startAttendance({ course, room });
-      toast($("camToast"), "Capture window opened on the server. Recognition is running.", "ok");
+      res = await AttendanceAPI.startAttendance({ course, room });
     } catch (err) {
+      netError = true;
+    }
+
+    // Definitive config error (e.g. no cameras configured for this room).
+    if (res && res.ok === false) {
+      toast($("camToast"), res.error || "Could not start the session.", "err");
+      $("course").disabled = false;
+      $("room").disabled = false;
+      refreshStartEnabled();
+      return;  // don't enter "live" state
+    }
+
+    if (netError) {
       toast($("camToast"),
         `Could not reach the backend at ${AttendanceAPI.base}. ` +
         `Start it with: source venv/bin/activate && python backend/server.py`, "err");
+    } else {
+      const cams = (res && res.cameras) || [];
+      const list = cams.length ? ` (${cams.join(", ")})` : "";
+      toast($("camToast"), `Capture window opened on the server${list}. Recognition is running.`, "ok");
     }
 
     running = true;

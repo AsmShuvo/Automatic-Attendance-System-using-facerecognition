@@ -61,22 +61,25 @@ An **embedding** (a.k.a. faceprint) is a list of 512 numbers that represents a
 face. Two photos of the same person produce nearby embeddings; different people
 produce far-apart ones. Embeddings are created in **two places**:
 
-### a) Reference photos — once, at startup
+### a) Reference photos — once, with `create_embedd.py`
 - `images/<regno>/` holds one folder per student (named by registration number)
   with one or more photos each.
-- On startup, every photo is turned into an embedding. These are the "known"
-  faces to match against.
-- This is the slow step (~1.6 s per photo), so the results are **cached to disk**
-  in `.embeddings_cache.pkl`. After the first run, startup is near-instant —
-  only new or edited photos get re-embedded (the cache is keyed by each file's
-  path + modified-time + size).
+- You run **`python create_embedd.py` once**. It turns every photo into an
+  embedding and saves them all permanently to **`embeddings.pkl`**.
+- This is the slow step (~1.6 s per photo), but it only happens when you run that
+  script — **not** every time the server starts.
+- The server (`recognizer.py`) then just **loads `embeddings.pkl` instantly**
+  (~0.001 s) on each start. Re-run `create_embedd.py` only when you add, remove,
+  or change student photos (the server warns you if `images/` changed since the
+  embeddings were built).
 
 ### b) Live faces — every 5 seconds, during class
 - At each scan, every face the camera currently sees is detected and embedded on
   the spot, so it can be compared to the known students.
 
-> Code: `FaceRecognizer.load_known_faces()` / `_embed_file()` (reference photos,
-> cached) and `identify_all()` (live faces) in `recognizer.py`.
+> Code: `create_embedd.py` + `FaceRecognizer.build_known_faces()` (build &
+> save reference photos), `load_known_faces()` (load `embeddings.pkl`), and
+> `identify_all()` (live faces) in `recognizer.py`.
 
 ---
 
@@ -190,8 +193,8 @@ The aggregated result is compiled into one session report and saved:
 ## Timeline of one class
 
 1. Teacher signs in, picks **Course** + **Room**, clicks **Start Class**.
-2. Backend launches the capture process; the model loads (instant if cached) and
-   the camera window opens.
+2. Backend launches the capture process; the face model loads and the prebuilt
+   `embeddings.pkl` loads instantly, then the camera window opens.
 3. Every **5 s**: detect faces → embed → compare to students → log the
    recognized ones to `attendance.csv`.
 4. Teacher clicks **End Class** → capture stops, the CSV is handed back.
@@ -207,5 +210,157 @@ The aggregated result is compiled into one session report and saved:
 |---------|---------|-------|
 | Scan interval | **5 s** | `INTERVAL` env var / defaults in `multicam_attendance.py`, `backend/server.py` |
 | Match strictness | **0.40** | `MATCH_THRESHOLD` in `recognizer.py` |
-| Cameras | Hikvision RTSP | `cameras.json` |
+| Cameras | Hikvision + GTech RTSP | `cameras.json` |
 | Detector input size | 640×640 | `det_size` in `recognizer.py` (raise it to catch smaller/farther faces) |
+
+---
+
+## The recognition system in detail
+
+### Which model
+
+The system uses **InsightFace** with the **`buffalo_l`** model pack, which is two
+neural networks working together:
+
+1. **SCRFD** (`det_10g.onnx`) — the **face detector**. Given an image, it finds
+   *where* the faces are (bounding boxes + 5 landmark points), even for many
+   faces at once. The frame is resized to **640×640** before detection
+   (`det_size`).
+2. **ArcFace** (`w600k_r50.onnx`) — the **face recognizer**. It's a **ResNet-50**
+   trained on the WebFace600K dataset. Given one aligned face crop, it outputs a
+   **512-number embedding** (faceprint). Faces of the same person land close
+   together in this 512-D space; different people land far apart.
+
+Both run through **ONNX Runtime** on the **CPU** (`CPUExecutionProvider`). No
+internet or cloud is involved — everything runs locally. The model files live in
+`~/.insightface/models/buffalo_l/` (downloaded once on first install).
+
+### How it's used (the pipeline per scan)
+
+```
+camera frame
+   │
+   ▼  SCRFD detector  (resize to 640×640, find all faces)
+faces[]  → for each face:
+   │
+   ▼  ArcFace  (align the face to 112×112, run ResNet-50)
+512-D embedding
+   │
+   ▼  cosine similarity vs every enrolled student's embeddings
+best match score
+   │
+   ▼  score ≥ 0.40 ?  → recognized as that student : "unknown"
+```
+
+- **Enrolled students** are embedded once by `create_embedd.py` and stored in
+  `embeddings.pkl`. At runtime only **live faces** are embedded.
+- **Matching** is plain math: the dot product of two 512-number vectors. Comparing
+  one face against hundreds of students takes only a few **milliseconds**.
+- Why ArcFace is good: it was trained so that the *angle* between embeddings is a
+  reliable identity signal — it's one of the most accurate open face-recognition
+  models available, and it generalizes to people it never saw in training (you
+  only give it a few photos per student).
+
+> Code: `recognizer.py` (`FaceRecognizer`), model pack chosen in `__init__`.
+
+---
+
+## Will it work with 4 cameras?
+
+**Yes.** The design already supports it — `cameras.json` just takes more entries:
+
+```json
+[
+  { "name": "front-left",  "source": "rtsp://…/…" },
+  { "name": "front-right", "source": "rtsp://…/…" },
+  { "name": "back-left",   "source": "rtsp://…/…" },
+  { "name": "back-right",  "source": "rtsp://…/…" }
+]
+```
+
+What happens with 4 cameras:
+
+- **One thread per camera.** Each opens its own stream and reads frames
+  independently (`CameraWorker`).
+- **Scans are staggered.** With a 5 s interval and 4 cameras, each camera scans at
+  a different offset (0 s, 1.25 s, 2.5 s, 3.75 s) so they don't all hit the CPU at
+  the same instant.
+- **One shared model.** All threads share a single loaded model, guarded by a lock
+  (`rec_lock`) — the CPU runs one recognition at a time anyway, so this avoids
+  thrashing.
+- **Merged results.** A student seen by *any* camera is marked present; a student
+  seen by two cameras in the same cycle is logged **once** (the `SharedLogger`
+  cooldown dedups across cameras by registration number).
+- **Tiled display.** The window auto-arranges into a grid (4 cameras → 2×2).
+- **Auto-reconnect.** If any camera drops, its tile shows `offline — retrying` and
+  reconnects on its own without affecting the others.
+
+### The real limit: CPU, not the code
+
+The bottleneck is **decoding + recognizing** on the CPU. Rough budget per scan:
+
+```
+detect (1 frame) ~0.2s  +  embed each visible face ~0.07s  +  match ~0.003s/face
+```
+
+The concern with 4 cameras is **continuous video decoding**. Four 6-MP H.265/H.264
+streams decoded nonstop is heavy for a CPU. If the machine can't keep up you'll
+see lag, dropped frames, or rising latency — **not wrong answers**, just slowness.
+
+Practical guidance:
+
+- **4 cameras at sub-stream resolution (e.g. 720p): comfortable on a typical CPU.**
+- **4 cameras at full 6-MP main-stream: heavy** — works, but may lag on a laptop
+  CPU. Use sub-streams, or a GPU (below).
+- Recognition cost scales with **faces actually visible**, not the number of
+  cameras or enrolled students. 4 cameras showing 25 students each = 100 face
+  embeddings per full cycle, spread across the staggered 5 s — manageable.
+
+---
+
+## Making it faster / better
+
+### Faster (more cameras, less lag)
+
+1. **Use camera sub-streams.** Every IP camera sends a second, lower-resolution
+   stream. Decoding 720p instead of 6-MP is several times cheaper and barely hurts
+   recognition for nearby faces. Biggest single win for multi-camera setups.
+   *(Hikvision: `…/Streaming/Channels/102`; XiongMai: `…&stream=1.sdp`.)*
+2. **Add a GPU.** Switch `CPUExecutionProvider` → `CUDAExecutionProvider` (with
+   `onnxruntime-gpu`). Face embedding drops from ~70 ms to ~5 ms — a 10×+ speedup
+   that makes many cameras and crowded frames trivial. *(One line in
+   `recognizer.py`.)*
+3. **Lengthen the scan interval** if you don't need 5 s granularity. `INTERVAL=10`
+   halves the recognition workload.
+4. **Vectorize matching.** Replace the per-student Python loop with a single matrix
+   multiply (all embeddings at once). Minor at hundreds of students, but free.
+5. **Lower `det_size`** (e.g. 480) for faster detection — but this *reduces* the
+   ability to see small/far faces, so it's a trade-off, not a free win.
+
+### Better recognition (more accurate attendance)
+
+1. **More reference photos per student.** 3–5 photos covering different angles,
+   lighting, and with/without glasses dramatically improves reliability (a face
+   matches if it's close to *any* stored photo). Re-run `create_embedd.py` after
+   adding them.
+2. **Raise `det_size`** (e.g. 1024 or 1280) to detect **smaller / farther** faces
+   — important for back rows in a large classroom. Costs more CPU per scan but
+   catches students a 640 input would miss.
+3. **Tune `MATCH_THRESHOLD`.** Raise it (e.g. 0.45) if different students get
+   confused (fewer false matches); lower it (e.g. 0.35) if real students are
+   missed. 0.40 is a balanced default.
+4. **Camera placement & resolution.** A face needs to be roughly **≥100 px** wide
+   and reasonably front-facing to recognize well. Multiple cameras at good angles
+   (front + sides) beat one wide shot — which is exactly why 4 cameras help: they
+   give each student at least one clear, large, frontal view.
+5. **Good lighting.** Even, front-ish lighting helps far more than any setting.
+   Strong backlight (a bright window behind students) is the usual culprit for
+   missed faces.
+
+### Quick recommendation
+
+For a full classroom with 4 cameras: run cameras on **sub-streams**, raise
+`det_size` to ~960–1024 so back-row faces are still caught, give each student
+3–5 varied reference photos, and — if you want it to fly — move recognition to a
+**GPU**. That combination is both faster *and* more accurate than the current
+single-CPU, full-resolution default.

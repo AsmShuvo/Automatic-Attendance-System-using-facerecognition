@@ -32,6 +32,13 @@
   window.AttendanceAPI = {
     base: API_BASE,
 
+    // Courses + room names for the dashboard dropdowns (no camera URLs exposed).
+    async fetchConfig() {
+      const res = await fetch(API_BASE + "/api/config");
+      if (!res.ok) throw new Error(`config -> HTTP ${res.status}`);
+      return res.json();
+    },
+
     // Start a class session. course/room are recorded with the session.
     startAttendance: ({ course, room } = {}) =>
       postJson("/api/attendance/start", { course, room }),

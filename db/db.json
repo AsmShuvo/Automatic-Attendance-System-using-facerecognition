@@ -12,5 +12,67 @@
         "endTime": "16:12:21"
       }
     ]
+  },
+  {
+    "classid": "301_CSE101_2026-06-29_16:49:29",
+    "courseName": "CSE101",
+    "room": "301",
+    "savedAt": "2026-06-29T10:50:00.840Z",
+    "attendance": [
+      {
+        "regno": "2020331072",
+        "date": "2026-06-29",
+        "startTime": "16:49:29",
+        "endTime": "16:49:55"
+      }
+    ]
+  },
+  {
+    "classid": "301_CSE101_2026-06-29_17:07:19",
+    "courseName": "CSE101",
+    "room": "301",
+    "savedAt": "2026-06-29T11:12:44.520Z",
+    "attendance": [
+      {
+        "regno": "2020331070",
+        "date": "2026-06-29",
+        "startTime": "17:07:19",
+        "endTime": "17:10:27"
+      },
+      {
+        "regno": "2020331072",
+        "date": "2026-06-29",
+        "startTime": "17:10:43",
+        "endTime": "17:11:18"
+      }
+    ]
+  },
+  {
+    "classid": "G1_CSE101_2026-06-30_17:04:14",
+    "courseName": "CSE101",
+    "room": "G1",
+    "savedAt": "2026-06-30T11:04:27.274Z",
+    "attendance": [
+      {
+        "regno": "2020331070",
+        "date": "2026-06-30",
+        "startTime": "17:04:14",
+        "endTime": "17:04:18"
+      }
+    ]
+  },
+  {
+    "classid": "G2_CSE101_2026-06-30_17:04:55",
+    "courseName": "CSE101",
+    "room": "G2",
+    "savedAt": "2026-06-30T11:05:04.155Z",
+    "attendance": [
+      {
+        "regno": "2020331070",
+        "date": "2026-06-30",
+        "startTime": "17:04:55",
+        "endTime": "17:04:55"
+      }
+    ]
   }
 ]

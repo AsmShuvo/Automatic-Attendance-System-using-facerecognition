@@ -6,13 +6,17 @@ OpenCV capture window on this machine's desktop and writes attendance.csv.
 "Stop Attendance" terminates that process and hands the session CSV back.
 
 Endpoints (consumed by frontend/shared/api.js):
-    POST /api/attendance/start   { course, room }  -> open capture window
+    GET  /api/config                               -> { courses, rooms } for dropdowns
+    POST /api/attendance/start   { course, room }  -> open that room's cameras
     POST /api/attendance/stop                      -> close window, return CSV
     GET  /api/attendance/csv                        -> latest attendance CSV text
     GET  /api/attendance/status                     -> { running, course, room }
     POST /api/report/save        <report json>     -> append to db/db.json
     GET  /api/reports                              -> all saved session reports
     GET  /api/report/latest                        -> most recent session report
+
+Cameras are configured per room in config.json (see config.example.json); the
+browser never sees camera URLs/passwords — it only gets room names.
 
 Run (from your desktop session, so the window can appear):
     source venv/bin/activate
@@ -29,11 +33,17 @@ import sys
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+try:
+    import db  # when launched as backend/server.py (backend/ is on sys.path)
+except ImportError:
+    from backend import db  # when imported as a package
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_PATH = os.path.join(ROOT, "attendance.csv")
 ATTENDANCE_SCRIPT = os.path.join(ROOT, "attendance.py")
 MULTICAM_SCRIPT = os.path.join(ROOT, "multicam_attendance.py")
-CAMERAS_CONFIG = os.path.join(ROOT, "cameras.json")
+CONFIG_PATH = os.path.join(ROOT, "config.json")              # courses + offline room fallback
+SESSION_CAMS = os.path.join(ROOT, ".session_cameras.json")   # cameras for the running session
 # Local stand-in for the future MongoDB Atlas collection (requirement.md §3).
 DB_PATH = os.path.join(ROOT, "db", "db.json")
 
@@ -53,6 +63,45 @@ def is_running() -> bool:
     return proc is not None and proc.poll() is None
 
 
+def load_config() -> dict:
+    """Courses + per-room cameras (the source of truth). Empty if missing."""
+    try:
+        with open(CONFIG_PATH) as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {"courses": [], "rooms": {}}
+
+
+def cameras_for_room(room: str) -> list:
+    """The camera list for a room. MongoDB is the source of truth; if it's
+    unreachable, fall back to config.json."""
+    cams = db.get_room_cameras(room)  # None if MongoDB is down
+    if cams is not None:
+        return cams
+    rooms = load_config().get("rooms", {})
+    entry = rooms.get(room) or {}
+    return entry.get("cameras", []) if isinstance(entry, dict) else (entry or [])
+
+
+def all_rooms() -> list:
+    """Room names from MongoDB, falling back to config.json."""
+    rooms = db.list_rooms()  # None if MongoDB is down
+    if rooms:
+        return rooms
+    return list(load_config().get("rooms", {}).keys())
+
+
+@app.route("/api/config", methods=["GET"])
+def get_config():
+    """Drives the dashboard dropdowns: course list + room names (no camera
+    URLs/passwords are exposed to the browser)."""
+    return jsonify({
+        "courses": load_config().get("courses", []),
+        "rooms": all_rooms(),
+        "db": "mongodb" if db.is_up() else "config.json",
+    })
+
+
 @app.route("/api/attendance/start", methods=["POST"])
 def start():
     global proc, started_at, session
@@ -60,23 +109,45 @@ def start():
         return jsonify({"ok": True, "already_running": True})
 
     data = request.get_json(silent=True) or {}
-    session = {"course": data.get("course"), "room": data.get("room")}
+    room = data.get("room")
+    session = {"course": data.get("course"), "room": room}
+
+    # Pick the cameras for THIS room only.
+    cams = cameras_for_room(room)
+
+    # When a room registry exists (MongoDB or config.json), a room with no
+    # cameras is a setup error — don't silently use some other room's cameras.
+    if not cams and (db.is_up() or os.path.exists(CONFIG_PATH)):
+        return jsonify({
+            "ok": False,
+            "error": f"No cameras are configured for room '{room}'. "
+                     f"Add them with: python seed_rooms.py (or in config.json).",
+        })
 
     # Fresh CSV per session so the report reflects only this class.
     if os.path.exists(CSV_PATH):
         os.remove(CSV_PATH)
 
-    # Launch attendance.py in AUTO mode -> opens the OpenCV capture window.
     env = dict(os.environ)
     env["AUTO"] = "1"
     env["INTERVAL"] = str(INTERVAL)
-    env["CAMERA_INDEX"] = str(CAMERA_INDEX)
-    if CAMERA_SOURCE:
-        env["CAMERA_SOURCE"] = CAMERA_SOURCE
     env.setdefault("DISPLAY", ":0")  # ensure the window has a display
 
-    # Multi-camera (cameras.json present) or single-camera capture.
-    script = MULTICAM_SCRIPT if os.path.exists(CAMERAS_CONFIG) else ATTENDANCE_SCRIPT
+    if cams:
+        # Write THIS room's cameras (from MongoDB) to a per-session file and run
+        # the multi-cam capture against exactly those.
+        with open(SESSION_CAMS, "w") as f:
+            json.dump(cams, f)
+        env["CAMERAS_CONFIG"] = SESSION_CAMS
+        script = MULTICAM_SCRIPT
+    else:
+        # No room registry at all (MongoDB down and no config.json) — last-ditch
+        # single-webcam fallback so the app still does something.
+        env["CAMERA_INDEX"] = str(CAMERA_INDEX)
+        if CAMERA_SOURCE:
+            env["CAMERA_SOURCE"] = CAMERA_SOURCE
+        script = ATTENDANCE_SCRIPT
+
     log = open(os.path.join(ROOT, "capture.log"), "w")
     try:
         proc = subprocess.Popen(
@@ -87,7 +158,7 @@ def start():
         return jsonify({"ok": False, "error": str(e)}), 500
 
     started_at = dt.datetime.now().isoformat()
-    return jsonify({"ok": True, **session})
+    return jsonify({"ok": True, "cameras": [c.get("name") for c in cams], **session})
 
 
 @app.route("/api/attendance/stop", methods=["POST"])
