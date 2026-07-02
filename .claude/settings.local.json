@@ -37,23 +37,16 @@
       "Bash(timeout 30 venv/bin/python -c ' *)",
       "Bash(ip route *)",
       "Bash(venv/bin/python -c \"import ast; ast.parse\\(open\\('multicam_attendance.py'\\).read\\(\\)\\); print\\('multicam_attendance.py OK'\\)\")",
-      "Bash(sed -i 's#.embeddings_cache.pkl#embeddings.pkl#' .gitignore)",
-      "Bash(venv/bin/python -c \"import ast; ast.parse\\(open\\('create_embedd.py'\\).read\\(\\)\\); ast.parse\\(open\\('recognizer.py'\\).read\\(\\)\\); print\\('OK'\\)\")",
-      "Bash(venv/bin/python create_embedd.py)",
-      "Bash(venv/bin/python -c ' *)",
-      "Bash(touch images/2020331000/*)",
-      "Bash(venv/bin/python -c \"from recognizer import FaceRecognizer; FaceRecognizer\\(\\).load_known_faces\\(\\)\")",
-      "Bash(curl -s -m 4 http://localhost:8000/api/config)",
-      "Bash(curl -s -m 5 -X POST http://localhost:8000/api/attendance/start -H 'Content-Type: application/json' -d '{\"course\":\"CSE101\",\"room\":\"303\"}')",
-      "Bash(curl -s -m 5 -X POST http://localhost:8000/api/attendance/stop)",
-      "Bash(curl -s -m 5 -X POST http://localhost:8000/api/attendance/start -H 'Content-Type: application/json' -d '{\"course\":\"CSE101\",\"room\":\"301\"}')",
-      "Bash(fuser -k 8000/tcp)",
-      "Bash(curl -s -m 2 -o /dev/null -w \"%{http_code}\" http://localhost:8000/api/config)",
-      "Bash(venv/bin/pip install *)",
-      "Bash(venv/bin/python seed_rooms.py)",
+      "Bash(git reset *)",
+      "Bash(/home/shuvo/mongodb/bin/mongod --version)",
+      "Bash(curl -s -m 5 http://localhost:8000/api/config)",
+      "Bash(cd *)",
+      "Bash(ping -c 2 -W 2 10.100.32.123)",
+      "Bash(grep -q 'mongodb-setup' MEMORY.md)",
+      "Bash(printf -- '- [MongoDB setup]\\(mongodb-setup.md\\) — manual tarball auto-started via systemd user service; room→camera config lives in Mongo\\\\n')",
+      "Bash(venv/bin/python -c \"import ast; ast.parse\\(open\\('seed_rooms.py'\\).read\\(\\)\\); print\\('seed_rooms.py OK'\\)\")",
       "Bash(venv/bin/python seed_rooms.py --list)",
-      "Bash(grep -n 'FALLBACK_ROOMS\\\\|loadDropdowns\\\\|fillSelect\\(\\\\$\\(\"room\"\\)' frontend/teacher/teacher.js)",
-      "Bash(venv/bin/python --version)"
+      "Bash(kill 7932)"
     ]
   }
 }

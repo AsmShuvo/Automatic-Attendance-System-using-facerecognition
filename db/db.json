@@ -74,5 +74,33 @@
         "endTime": "17:04:55"
       }
     ]
+  },
+  {
+    "classid": "G1_CSE101_2026-07-02_15:30:50",
+    "courseName": "CSE101",
+    "room": "G1",
+    "savedAt": "2026-07-02T09:31:06.437Z",
+    "attendance": [
+      {
+        "regno": "2020331070",
+        "date": "2026-07-02",
+        "startTime": "15:30:50",
+        "endTime": "15:30:50"
+      }
+    ]
+  },
+  {
+    "classid": "G1_CSE101_2026-07-02_16:07:54",
+    "courseName": "CSE101",
+    "room": "G1",
+    "savedAt": "2026-07-02T10:08:35.206Z",
+    "attendance": [
+      {
+        "regno": "2020331070",
+        "date": "2026-07-02",
+        "startTime": "16:07:54",
+        "endTime": "16:08:24"
+      }
+    ]
   }
 ]
