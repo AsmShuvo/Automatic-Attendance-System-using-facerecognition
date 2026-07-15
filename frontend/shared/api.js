@@ -60,5 +60,12 @@
       if (!res.ok) throw new Error(`latest -> HTTP ${res.status}`);
       return res.json();
     },
+
+    // Every saved session report (used to build a student's full history).
+    async fetchAllReports() {
+      const res = await fetch(API_BASE + "/api/reports");
+      if (!res.ok) throw new Error(`reports -> HTTP ${res.status}`);
+      return res.json();
+    },
   };
 })();

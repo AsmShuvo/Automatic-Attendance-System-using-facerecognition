@@ -1,83 +1,79 @@
-/* Student view (read-only): shows the latest saved session from the backend. */
+/* Student view (read-only): look up a reg number and show that student's full
+   attendance history (across every saved session in db.json). */
 (function () {
   const $ = (id) => document.getElementById(id);
-  let report = null;  // { classid, courseName, room, savedAt, attendance: [...] }
 
   function setToast(el, msg, kind = "") {
     el.textContent = msg;
     el.className = "toast" + (kind ? " " + kind : "");
   }
 
-  function timeToSec(t) {
-    const [h, m, s = 0] = String(t).split(":").map(Number);
-    return h * 3600 + m * 60 + s;
-  }
-  function duration(rec) {
-    return Report.secToHMS(Math.max(0, timeToSec(rec.endTime) - timeToSec(rec.startTime)));
-  }
+  async function lookup() {
+    const reg = $("regInput").value.trim();
+    if (!reg) { setToast($("toast"), "Enter your registration number.", "err"); return; }
 
-  async function loadReport() {
-    setToast($("summaryToast"), "Loading latest session…");
+    setToast($("toast"), "Searching all sessions…");
+
+    let sessions;
     try {
-      report = await AttendanceAPI.fetchLatestReport();
+      sessions = await AttendanceAPI.fetchAllReports();
     } catch (err) {
-      report = null;
-      setToast($("summaryToast"), "Could not reach the server. Is the backend running?", "err");
+      setToast($("toast"), "Could not reach the server. Is the backend running?", "err");
       return;
     }
 
-    const tbody = $("summaryTable").querySelector("tbody");
+    // Flatten every session into one row per time this student was detected.
+    const rows = [];
+    for (const s of sessions || []) {
+      for (const a of s.attendance || []) {
+        if (a.regno === reg) {
+          rows.push({
+            regno: a.regno,
+            date: a.date,
+            startTime: a.startTime,       // kept only for chronological sorting
+            courseName: s.courseName || "—",
+            room: s.room || "—",
+          });
+        }
+      }
+    }
+
+    // Order from beginning to end (by date, then start time).
+    rows.sort((x, y) =>
+      (x.date + " " + x.startTime).localeCompare(y.date + " " + y.startTime));
+
+    const tbody = $("historyTable").querySelector("tbody");
     tbody.innerHTML = "";
+    $("historyCard").style.display = "block";
+    $("historyTitle").textContent = `Records · ${reg}`;
 
-    if (!report || !report.attendance || !report.attendance.length) {
-      $("summaryArea").style.display = "none";
-      $("summaryEmpty").style.display = "block";
-      setToast($("summaryToast"), "No saved session yet. Ask your teacher to save attendance.", "");
+    if (!rows.length) {
+      $("historyArea").style.display = "none";
+      $("historyEmpty").style.display = "block";
+      $("historySub").textContent = "Every session you were detected in, oldest to newest.";
+      setToast($("toast"), `No records found for ${reg}.`, "err");
       return;
     }
 
-    for (const r of report.attendance) {
+    for (const r of rows) {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td><span class="reg">${r.regno}</span></td>
         <td>${r.date}</td>
-        <td>${r.startTime}</td>
-        <td>${r.endTime}</td>
-        <td>${duration(r)}</td>`;
+        <td>${r.courseName}</td>
+        <td>${r.room}</td>`;
       tbody.appendChild(tr);
     }
-    $("summaryArea").style.display = "block";
-    $("summaryEmpty").style.display = "none";
+    $("historyArea").style.display = "block";
+    $("historyEmpty").style.display = "none";
 
-    const title = [report.courseName, report.room ? "Room " + report.room : ""].filter(Boolean).join(" · ");
-    $("summaryTitle").textContent = title || "Latest session";
-    const when = report.savedAt ? new Date(report.savedAt).toLocaleString() : "";
-    setToast($("summaryToast"), `${report.attendance.length} students · saved ${when}`, "ok");
-  }
-
-  function lookup() {
-    if (!report || !report.attendance) { setToast($("toast"), "No saved session yet.", "err"); return; }
-    const reg = $("regInput").value.trim();
-    if (!reg) { setToast($("toast"), "Enter your registration number.", "err"); return; }
-
-    const r = report.attendance.find((x) => x.regno === reg);
-    if (!r) {
-      $("myCard").style.display = "none";
-      setToast($("toast"), `No record for ${reg} — you were not detected in the latest session.`, "err");
-      return;
-    }
-    $("myTitle").textContent = `Record · ${r.regno}`;
-    $("myStart").textContent = r.startTime;
-    $("myEnd").textContent = r.endTime;
-    $("myDuration").textContent = duration(r);
-    $("myStatus").innerHTML = `<span class="badge full">Present</span>`;
-    $("myCard").style.display = "block";
-    setToast($("toast"), "", "");
+    const days = new Set(rows.map((r) => r.date)).size;
+    $("historySub").textContent =
+      `${rows.length} record${rows.length > 1 ? "s" : ""} across ${days} day${days > 1 ? "s" : ""}.`;
+    setToast($("toast"), "", "ok");
   }
 
   $("lookupBtn").addEventListener("click", lookup);
-  $("refreshBtn").addEventListener("click", loadReport);
+  $("refreshBtn").addEventListener("click", lookup);
   $("regInput").addEventListener("keydown", (e) => { if (e.key === "Enter") lookup(); });
-
-  loadReport();
 })();

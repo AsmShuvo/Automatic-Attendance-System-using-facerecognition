@@ -46,7 +46,8 @@
       "Bash(printf -- '- [MongoDB setup]\\(mongodb-setup.md\\) — manual tarball auto-started via systemd user service; room→camera config lives in Mongo\\\\n')",
       "Bash(venv/bin/python -c \"import ast; ast.parse\\(open\\('seed_rooms.py'\\).read\\(\\)\\); print\\('seed_rooms.py OK'\\)\")",
       "Bash(venv/bin/python seed_rooms.py --list)",
-      "Bash(kill 7932)"
+      "Bash(kill 7932)",
+      "Bash(XDG_RUNTIME_DIR=/run/user/1000 /home/shuvo/mongodb/bin/mongosh --quiet attendance --eval 'db.rooms.find\\({}, {room:1, \"cameras.name\":1, \"cameras.source\":1}\\).forEach\\(r=>printjson\\(r\\)\\)')"
     ]
   }
 }

@@ -47,7 +47,7 @@ SESSION_CAMS = os.path.join(ROOT, ".session_cameras.json")   # cameras for the r
 # Local stand-in for the future MongoDB Atlas collection (requirement.md §3).
 DB_PATH = os.path.join(ROOT, "db", "db.json")
 
-INTERVAL = os.environ.get("INTERVAL", "5")           # seconds between scans
+INTERVAL = os.environ.get("INTERVAL", "10")          # seconds between scans
 CAMERA_INDEX = os.environ.get("CAMERA_INDEX", "1")   # real webcam node
 CAMERA_SOURCE = os.environ.get("CAMERA_SOURCE")      # optional CCTV/RTSP url
 

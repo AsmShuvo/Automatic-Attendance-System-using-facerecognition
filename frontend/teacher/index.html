@@ -4,12 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard · Smart Attendance</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
   <link rel="stylesheet" href="../shared/styles.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <span class="mark">A</span>
+      <span class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M9 9h.01"/><path d="M15 9h.01"/><path d="M8 15s1.5 2 4 2 4-2 4-2"/></svg>
+      </span>
       <div>
         <h1>Smart Attendance</h1>
         <span class="role">Teacher Dashboard</span>
@@ -17,8 +20,8 @@
     </div>
     <nav>
       <span class="who" id="who"></span>
-      <a href="../student/index.html">Student view →</a>
-      <a href="#" id="logoutLink">Sign out</a>
+      <a href="../student/index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Student view</a>
+      <a href="#" id="logoutLink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign out</a>
     </nav>
   </header>
 
@@ -62,8 +65,8 @@
       </div>
 
       <div class="row">
-        <button class="start" id="startBtn" disabled>▶ Start Class</button>
-        <button class="stop" id="stopBtn" disabled>■ End Class</button>
+        <button class="start" id="startBtn" disabled><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 4 20 12 6 20 6 4"/></svg>Start Class</button>
+        <button class="stop" id="stopBtn" disabled><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>End Class</button>
       </div>
       <p class="hint" style="margin-top:16px;">The face-capture window opens on the server machine. Recognition and CSV logging run there; this dashboard starts/stops it and builds the report.</p>
       <div class="toast" id="camToast"></div>
@@ -75,9 +78,9 @@
       <p class="hint">When class ends, aggregate the raw detections into one entry per student (first &amp; last seen) and save the session.</p>
 
       <div class="row" style="margin-bottom: 8px;">
-        <button id="saveBtn" disabled>💾 Save Attendance</button>
-        <button class="ghost" id="loadCsvBtn">Load latest CSV</button>
-        <button class="ghost" id="downloadBtn" disabled>⬇ Download JSON</button>
+        <button id="saveBtn" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save Attendance</button>
+        <button class="ghost" id="loadCsvBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Load latest CSV</button>
+        <button class="ghost" id="downloadBtn" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download JSON</button>
         <span class="muted" id="reportMeta"></span>
       </div>
 
