@@ -1,6 +1,6 @@
 \documentclass[conference,onecolumn,12pt]{IEEEtran}
 
-% ---- Packages ----
+%  - - Packages  - -
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
@@ -40,12 +40,12 @@ Email: third.author@institution.edu}
 \begin{abstract}
 The Autonomous Attendance System with Face Recognition automates classroom
 attendance by identifying students directly from live camera feeds. Traditional
-methods---manual roll calls, fingerprint scanners, and QR-code check-ins---waste
+methods - manual roll calls, fingerprint scanners, and QR-code check-ins - waste
 lecture time, create queues at a single device, and remain open to proxy
 attendance. The proposed system merges live streams from multiple RTSP-enabled
 CCTV/IP cameras, recognizes several students at once, and logs attendance in real
 time with the registration number, course, room, and date. For each student it
-also measures time present---from first to last sighting---and reports it as a
+also measures time present - from first to last sighting - and reports it as a
 share of the class duration, so late arrivals and early departures are marked
 partially present rather than treated as all-or-nothing. Detection uses SCRFD
 and recognition uses ArcFace (ResNet-50) to produce 512-dimensional embeddings,
@@ -125,24 +125,35 @@ concludes the paper and outlines directions for future work.
 % Background Study
 % ============================================================
 \section{Background Study}
+Attendance report recording is significant in institutions of learning. Due to the fact that, the
+attendance of the students is associated with the academic outcomes. Students who attend classes
+record high grades in terms of performance. A good attendance system aids a teacher with the
+attendance of students. It is also useful in establishing students who might require intervention
+because of not attending classes.\\
 
-Automated facial recognition has been adopted widely across surveillance,
-security, and smart-campus settings, largely because it identifies people without
-requiring any deliberate action from them. In enterprise environments, biometric
-verification has tightened access control, improved security, and removed the human
-bias that creeps into manual checks~\cite{ref1}. The same principles carry over
-naturally to education, where automated tracking helps manage large classrooms that
-are otherwise slow to account for. Early vision-based attendance frameworks pursued
-this goal with classical techniques, using Haar cascades for detection and
-Eigenfaces or LBPH for recognition. These systems worked under controlled
-conditions but degraded sharply once lighting, pose, or distance varied, which
-limited their usefulness in an ordinary lecture hall~\cite{ref2, ref3}.
+\textbf{Other Implementations:}
+Educational institutions continue to use manual methods of attendance. In places where
+teachers address the students by names or passing papers. These are manual processes that are
+time consuming. The solutions to these problems include some systems using different technologies
+that do not use face recognition. As an example, Radio Frequency Identification (RFID) based
+attendance systems. The attendance can be registered by merely swiping an RFID card to a
+reader. Attendance systems that operate on fingerprint scan are based on fingerprint. Research
+has indicated biometric systems to be 3.8 seconds average per student. Conversely, it took 17.8
+seconds to sign the manual manually\\
 
-Our system builds on the deep-learning and computer-vision work that followed,
+\textbf{Early Face Recognition Systems:}
+Face recognition gained popularity when computer vision had been developed. The attendance
+system can be easily incorporated into it. Initial versions of such systems were based on classical
+algorithms. As an example, the Eigenfaces method is based on Principal Component Analysis
+to recognize faces and mark attendance [2]. The other method involves Haar Cascade algorithm
+of detecting and Local Binary Patterns Histogram (LBPH) algorithm of face recognition. Such
+systems deal with such challenges as lost RFID cards. Nevertheless, these initial face recognition
+systems may be susceptible to environmental or camera anomalies. And their performance may
+be broken in case the lighting, pose or the quality of the image was not optimal.\\
+
+\textbf{What we are going to use:} Our system builds on the deep-learning and computer-vision work that followed,
 turning those advances into a deployable, multi-camera attendance system backed by
-a full software stack. Much of the prior work stopped at single-camera setups,
-theoretical simulations, or paid cloud APIs such as AWS Rekognition and Azure Face
-API, which introduce recurring cost and send biometric data off-site. We take a
+a full software stack. We take a
 different route with on-device processing built around the InsightFace framework,
 pairing SCRFD for accurate face detection with an ArcFace (ResNet-50) recognizer
 that produces 512-dimensional embeddings robust to real-world variation in pose and
@@ -162,66 +173,123 @@ cost, and data protection all matter as much as raw accuracy.
 % ============================================================
 \section{Related Works}
 
-Face-recognition attendance has been studied widely, both by researchers in
-Bangladesh and abroad. This section reviews representative systems, notes their
-models, stack, and trade-offs, and positions the present work against them.
-Table~\ref{tab:related} summarizes the comparison.
+\subsection{Existing Systems}
+Some of the existing systems that we followed implements solutions almost to our
+project. We examine their main characteristics and weaknesses.\\
 
-\begin{table*}[t]
-    \centering
-    \caption{Comparison of representative face-recognition attendance systems.}
-    \label{tab:related}
-    \footnotesize
-    \begin{tabular}{@{}p{2.8cm}p{3.0cm}p{4.2cm}p{4.8cm}@{}}
-        \toprule
-        \textbf{Work (origin)} & \textbf{Detection / recognition} & \textbf{Stack and deployment} & \textbf{Key limitation} \\
-        \midrule
-        Ara et al.~\cite{ref7} (SUST, Bangladesh) & Custom CNN & OpenCV; single camera; local training & Single view; small CNN; retraining to add a student \\
-        Chowdhury et al.~\cite{ref6} (CUET, Bangladesh) & CNN classifier ($\approx$92\%) & OpenCV + CNN; single camera & Sensitive to pose and lighting; classifier retraining \\
-        Demir \& Sava\c{s}~\cite{ref10} (Turkey) & Deep-learning detector & Image-processing pipeline; single camera & Limited real-world testing; no offline/privacy focus \\
-        Patel et al.~\cite{ref8} (India) & ResNet-50, VGG-16 & CCTV + CNN classifiers & Heavy backbones; retraining per new student \\
-        Shukla et al.~\cite{ref9} (India) & CNN--LSTM & Deep pipeline; single camera & Added complexity; classifier-based; compute-heavy \\
-        \textbf{This work} & \textbf{SCRFD + ArcFace (512-D)} & \textbf{Multi-camera RTSP; ONNX; Flask + MongoDB; fully offline} & \textbf{Enrollment by embedding (no retraining); privacy-first} \\
-        \bottomrule
-    \end{tabular}
-\end{table*}
+\subsubsection{RealCoderz: Automated Attendance System}
+\textbf{\\Description.}
+RealCoderz~\cite{realcoderz} offers a smart attendance software that works on AI.
+It is applied to classrooms that have CCTV cameras.
 
-\subsection{Work in Bangladesh}
-Ara et al.~\cite{ref7} were among the early adopters of convolutional networks for
-student recognition in a Bangladeshi setting, showing that a CNN outperforms the
-classical Eigenface and LBPH pipelines it replaced. The study demonstrates the
-approach but stops at a single camera and a small custom network, and it does not
-address deployment as a running service. Chowdhury et al.~\cite{ref6} take this
-further with an automatic class-attendance system built on a CNN classifier,
-reporting roughly 92\% recognition accuracy on their own dataset. The system is a
-complete detect-train-recognize loop, which is its strength, but it depends on a
-single camera, is sensitive to pose and lighting, and---like any classifier-based
-design---needs retraining whenever a new student is enrolled.
+\textbf{Key Features.}
+\begin{itemize}
+    \item Facial data of students registered prior to classes.
+    \item The sessions begin on their own. It can also be instigated by teachers.
+    \item The CCTV cameras capture images throughout the classes.
+    \item The information stored is compared with face data.
+\end{itemize}
 
-\subsection{International Work}
-Demir and Sava\c{s}~\cite{ref10} apply modern deep-learning detection to classroom
-attendance and report a working implementation, though real-world evaluation was
-still pending and the design gives no attention to offline execution or privacy.
-Patel et al.~\cite{ref8} are closest to our setting in that they read existing CCTV
-feeds, using ResNet-50 and VGG-16 as recognition backbones. Their reliance on heavy
-classification networks makes the pipeline compute-intensive and, again, tied to
-retraining as the class roster changes. Shukla et al.~\cite{ref9} add temporal
-context with a CNN--LSTM model; the sequence model can improve robustness but
-increases complexity and cost, and the system remains single-camera and
-classifier-based.
+\textbf{Limitations.}
+\begin{itemize}
+    \item In this project, there is concentration on attendance only. It is not
+    able to identify the level of attention.\\
+\end{itemize}
+\subsubsection{Jibble: Face Recognition Attendance}
+\textbf{\\Description.}
+Another popular AI based workforce and attendance tracking system is
+Jibble~\cite{jibble}. It is mainly aimed at monitoring employees by the companies.
 
-\subsection{Positioning of This Work}
-Across these systems two patterns recur: they observe the room through a single
-camera, and they recognize students with a trained classifier that must be
-retrained to admit anyone new. Our design differs on both counts. It fuses several
-RTSP cameras into one view so that occlusion in one feed is covered by another, and
-it recognizes faces with ArcFace embeddings compared by cosine similarity, so a new
-student is enrolled simply by adding one embedding---no retraining of the model.
-The pipeline runs fully offline on ONNX Runtime with cached embeddings, which keeps
-it fast on commodity CPUs and, unlike CCTV- or cloud-oriented designs, ensures that
-no biometric data leaves the machine. Rather than a standalone recognizer, the
-result is a deployable system with a Flask backend, MongoDB-based configuration,
-and a web dashboard for teachers and students.
+\textbf{Key Features.}
+\begin{itemize}
+    \item Kiosk Mode: A common gadget installed in the work place. The system
+    recognizes faces.
+    \item Remote Mode: The employees report in/out on their mobile phones.
+\end{itemize}
+
+\textbf{Limitations.}
+\begin{itemize}
+    \item Intended not in classrooms, but in corporate offices.
+    \item Attendance does not involve active tracking of presence.\\
+\end{itemize}
+
+\subsubsection{Tipsoi: Fastface 5}
+\textbf{\\ Description.}
+Tipsoi~\cite{tipsoi} Fastface 5 is a modern solution for face detection.
+
+\textbf{Key Features.}
+\begin{itemize}
+    \item AI Dual Camera Predicts Face in under 0.3 sec.
+    \item Centralized Dashboard.
+    \item Supports both Android, iOS.
+\end{itemize}
+
+\textbf{Limitations.}
+\begin{itemize}
+    \item It is due to marking simple attendance and not constant surveillance.
+\end{itemize}
+
+\subsection{Existing Approaches}
+Some journal papers have been studied and mention approaches to make attendance
+systems using face recognition. These 4 papers have been chosen out of 10 relevant
+papers that we have chosen with our system.
+
+\subsubsection{Smart Attendance Management System (SAMS): Attendance Tracking
+Process in Educational Institution}
+Attendance tracking face recognition is the solution provided in this
+paper~\cite{sams}.
+
+\textbf{Approach Summary.}
+\begin{itemize}
+    \item Captures images.
+    \item Detect face using HOG method.
+    \item They are coded in face encoder OpenCV.
+    \item Different matching with LBPH and deep metric learning.
+    \item Marks attendance in database and in excel sheet.
+    \item Reports via email.
+\end{itemize}
+
+\subsubsection{Automated Attendance System by Facial Recognition Using CCTV}
+The approach to the automated attendance taking system is reliable, as in this
+paper~\cite{cctvfr}.
+
+\textbf{Approach Summary.}
+\begin{itemize}
+    \item CCTV recording is a real-time video.
+    \item MTCNN detects faces.
+    \item FaceNet gives embeddings.
+    \item YOLOv8 detects objects.
+    \item Flask handles backend.
+    \item PostgreSQL.
+    \item React for frontend.
+\end{itemize}
+
+\subsubsection{Smart Attendance Tracking and Performance Monitoring System Based on
+CCTV Camera Input}
+An effective method that is provided in this paper~\cite{avghash} is based on the
+Euclidean distance, which is called the Average hashing.
+
+\textbf{Approach Summary.}
+\begin{itemize}
+    \item CCTV footage for capture video.
+    \item Faces identified using DNN, HOG and Encoding.
+    \item Compared to images in memory.
+    \item Data stored in database.
+\end{itemize}
+
+\subsubsection{Automated Attendance System with AI and Real-Time Camera Access
+using Facial Recognition}
+The approach that is reliable and can be applied in educational institutes is SVM
+as presented in this paper~\cite{svmrtsp}.
+
+\textbf{Approach Summary.}
+\begin{itemize}
+    \item Video stream captured in real-time with the help of RTSP.
+    \item YOLO detects faces.
+    \item ViT/MobileNet classifies.
+    \item SVM/KNN verifies embedding.
+    \item SQLite DB.
+\end{itemize}
 
 % ============================================================
 % Requirement Analysis
@@ -233,11 +301,11 @@ and it keeps the later design honest. This section sets out the requirements of 
 Autonomous Attendance System through a software requirement specification (SRS) and
 a use case model that names the actors and the actions they perform.
 
-\subsection{Software Requirement Specification (SRS)}
+\subsection{\textbf{Software Requirement Specification (SRS)}}
 The SRS records the functional and non-functional requirements together with the
-hardware and software the system depends on.
+hardware and software the system depends on.\\
 
-\subsubsection{Functional Requirements}
+\subsubsection{\textbf{Functional Requirements}}
 \begin{itemize}
     \item \textit{Multi-Camera RTSP Streaming:} The system must capture and
     synchronize simultaneous video feeds from several classroom IP cameras so that
@@ -260,10 +328,10 @@ hardware and software the system depends on.
     sessions, and export reports, along with a read-only portal for students.
     \item \textit{Privacy-First Offline Execution:} All biometric processing and
     image caching must run strictly on the local machine, with no external cloud
-    dependency.
+    dependency.\\
 \end{itemize}
 
-\subsubsection{Non-Functional Requirements}
+\subsubsection{\textbf{Non-Functional Requirements}}
 \begin{itemize}
     \item \textit{Usability:} The web interface should be clear enough that a
     teacher can launch a session within two clicks.
@@ -275,31 +343,28 @@ hardware and software the system depends on.
     (\texttt{embeddings.pkl}) should allow near-instant matching and scale to
     several hundred registered students.
     \item \textit{Security and Privacy:} Biometric data must be protected by the
-    offline architecture, with authenticated access to the local database.
+    offline architecture, with authenticated access to the local database.\\
 \end{itemize}
 
-\subsubsection{Hardware Requirements}
+\subsubsection{\textbf{Hardware Requirements}}
 \begin{itemize}
     \item \textit{Capture Infrastructure:} RTSP-enabled IP or CCTV cameras, or
     network-connected external cameras covering the classroom.
-    \item \textit{Processing Station (Server-Side):} A host machine with a
-    multi-core x86 or ARM CPU, optionally a CUDA-capable NVIDIA GPU for
-    hardware-accelerated inference through ONNX Runtime.
+    \item \textit{Processing Station (Server-Side):}  A host machine with a multi-core x86 or ARM CPU. All inference runs on the CPU through ONNX Runtime, so no GPU is needed. ONNX Runtime can optionally use a CUDA-capable GPU for further acceleration, though the current deployment does not rely on one.\\
 \end{itemize}
 
-\subsubsection{Software Requirements}
+\subsubsection{\textbf{Software Requirements}}
 \begin{itemize}
     \item \textit{Core Frameworks:} Python~3.x, InsightFace (SCRFD and
     ArcFace/ResNet-50), ONNX Runtime, and OpenCV.
     \item \textit{Backend:} Flask exposing a REST API.
     \item \textit{Database Layer:} MongoDB.
-    \item \textit{Frontend:} HTML5, CSS3, and vanilla JavaScript.
+    \item \textit{Frontend:} HTML5, CSS3, and vanilla JavaScript.\\
 \end{itemize}
 
-\subsection{Use Case Modeling}
+\subsection{\textbf{Use Case Modeling}}
 Use case modeling identifies the actors that interact with the system and the
 operations each of them can carry out.
-
 \subsubsection{Actors}
 \begin{itemize}
     \item \textit{Teacher:} Starts and stops class monitoring, manages courses, and
@@ -309,14 +374,14 @@ operations each of them can carry out.
     \item \textit{Autonomous Recognition Engine (System Actor):} Runs continuous
     frame capture, faceprint extraction, similarity matching, and database logging
     without human intervention.
+    \item \textit{CCTV Camera:} Captures real-time video frames and streams them to the system.
+    \item \textit{Mail Server:} Sends the generated session attendance reports directly to the teacher via email.\\
 \end{itemize}
-
 \subsubsection{Use Cases}
 \begin{itemize}
-    \item \textit{User Authentication:} A teacher signs in to gain access to the
-    management dashboard.
     \item \textit{Session Control:} A teacher starts or stops monitoring for a
     selected course and room.
+    \item \textit{Real-Time Video Capture:} The CCTV camera continuously captures high-definition video frames of the classroom and streams them via RTSP.
     \item \textit{Real-Time Biometric Face Processing:} The recognition engine
     detects faces, extracts embeddings, and matches them against the database.
     \item \textit{Automated Database Logging:} The system writes attendance records,
@@ -326,6 +391,7 @@ operations each of them can carry out.
     class length, identifying partially present students.
     \item \textit{Report Generation and Tracking:} A teacher exports session
     reports, and a student reviews their own attendance log.
+    \item \textit{Automated Email Notification:} The mail server automatically dispatches the final session attendance report directly to the teacher's email inbox upon session termination.\\
 \end{itemize}
 
 \subsubsection{Use Case Diagram}
@@ -339,35 +405,6 @@ use cases of the system.
     \label{fig:usecase}
 \end{figure}
 
-% Developer note --- source for use_case_diagram.png (Mermaid syntax):
-%
-% ```mermaid
-% flowchart LR
-%     Teacher([Teacher])
-%     Student([Student])
-%     Engine([Recognition Engine])
-%
-%     subgraph System[Autonomous Attendance System]
-%         UC1((User Authentication))
-%         UC2((Session Control))
-%         UC3((Biometric Face Processing))
-%         UC4((Automated Logging))
-%         UC5((Report Generation & Tracking))
-%     end
-%
-%     Teacher --> UC1
-%     Teacher --> UC2
-%     Teacher --> UC5
-%     Student --> UC5
-%     Engine  --> UC3
-%     Engine  --> UC4
-%     UC2 --> UC3
-%     UC3 --> UC4
-% ```
-
-% ============================================================
-% Flow Diagram
-% ============================================================
 \section{Flow Diagram}
 
 The flow diagram in Figure~\ref{fig:flow} traces the sequence of actions the system
@@ -451,6 +488,297 @@ rather than a requirement. Table~\ref{tab:hw} lists the setup.
 \end{table}
 
 % ============================================================
+% Testing and Debugging
+% ============================================================
+\section{Testing and Debugging}
+\label{sec:testing}
+
+The system was tested in stages, starting with the simplest possible camera and
+ending with a live lecture. Each stage was chosen to isolate one variable: first
+the recognition pipeline on its own, then the multi-camera capture path, then real
+CCTV hardware, and finally a real class. Working this way kept the failures easy to
+attribute, since a problem that appeared only after a stage was added almost always
+belonged to that stage.
+
+\subsection{Incremental Testing of the Pipeline}
+The first trials used the laptop's built-in webcam, which let us confirm that
+detection, embedding, and matching behaved correctly before any network was
+involved. We then moved to a phone camera streamed over the network, which
+introduced the stream-reading path without the complications of fixed hardware.
+Finally we ran several phone cameras at the same time to exercise the
+thread-per-camera design and the shared recognition model. Through all three
+stages the pipeline behaved as expected: faces were detected, embeddings were
+matched against the cached gallery, and the merged log contained one record per
+student regardless of which camera saw them.
+
+\subsection{CCTV Integration and Network Debugging}
+With the pipeline trusted, we moved to the real hardware. Two CCTV cameras
+installed in Gallery~1 of the IICT Building at Shahjalal University of Science and
+Technology (SUST) were adjusted to cover the seating area from complementary
+angles. The first capture attempts failed. The cameras were reachable in principle
+but not from our workstation, and the capture window sat indefinitely on
+``connecting'' rather than reporting an error, because the RTSP connect was
+blocking until it timed out and then retrying.
+
+Diagnosis was straightforward once we stopped looking at the application. The
+camera did not answer an ICMP ping and its RTSP port was closed from the
+workstation, which told us the problem was addressing rather than recognition: the
+machine and the cameras were on different networks. We resolved it by placing both
+on the same LAN, connecting the camera to the workstation with an RJ45 cable and
+giving the interface an address in the camera's subnet. The streams then opened
+immediately. Figure~\ref{fig:camtest} shows the first frame captured from the
+installed CCTV cameras once access was working.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\linewidth]{camTest.png}
+    \caption{First successful capture from the CCTV cameras installed in
+    Gallery~1, IICT Building, SUST, after the network access issue was resolved.}
+    \label{fig:camtest}
+\end{figure}
+
+\subsection{Face Detection and Recognition Trials}
+The next test introduced real subjects. Four students were asked to sit in
+different positions and orientations so we could see how the detector behaved
+across the room rather than in front of a single camera. Figure~\ref{fig:testv1}
+shows the annotated output. Enrolled students were drawn with a yellow box
+labelled with their registration number, and anyone whose face was not in the
+gallery was drawn with a red box marked as unknown. The trial confirmed the
+expected behaviour and also exposed the first real limitation: a student looking
+down or turned away, so that the face was not visible to either camera, was not
+recognized at all. Detection, not matching, was the failure point in those cases.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\linewidth]{Testv1.png}
+    \caption{Recognition trial with four students in varied positions. Yellow boxes
+    mark enrolled students with their registration number; red boxes mark faces not
+    present in the enrolled gallery.}
+    \label{fig:testv1}
+\end{figure}
+
+We then scaled the trial to nine students, of whom eight had submitted enrollment
+images and one had not. Figure~\ref{fig:firsttest} shows the result. The system
+detected every face in the frame, recognized each of the eight enrolled students
+correctly, and marked the remaining student as unknown. The un-enrolled student
+mattered as much as the positive cases, since he was the check that the matching
+threshold was not simply assigning a stranger to the nearest identity in the
+gallery. Passing this test gave us the confidence to attempt a real class.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\linewidth]{firstTest.jpeg}
+    \caption{Group trial with nine students. All faces were detected; the eight
+    enrolled students were recognized and the single un-enrolled student was
+    correctly reported as unknown.}
+    \label{fig:firsttest}
+\end{figure}
+
+\subsection{Live Classroom Test}
+The final test ran during an ordinary lecture delivered by a teacher, with no
+change to how the class was conducted. Enough students had submitted images
+beforehand for the embeddings to be prebuilt, so the session started immediately
+and ran unattended for the duration of the class. Figure~\ref{fig:finaltest} shows
+the system operating during the lecture. Faces were detected and recognized across
+the room, and attendance was recorded for the enrolled students without any
+interaction from them.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\linewidth]{finalTest.png}
+    \caption{The system running during a live lecture. Enrolled students are
+    detected, recognized, and marked present without interrupting the class.}
+    \label{fig:finaltest}
+\end{figure}
+
+\subsection{Debugging}
+Most of the defects we fixed came from the surrounding system rather than the
+recognition models. The main ones, and how they were resolved, were as follows.
+
+\begin{itemize}
+    \item \textit{Silent camera stall.} A failed RTSP connect blocked and retried,
+    leaving the capture window on ``connecting'' with no explanation. We traced it
+    to the network rather than the code, and added an offline tile and retry with a
+    bounded timeout so an unreachable camera reports its state instead of hanging.
+    \item \textit{Dropped streams ending a session.} A transient drop on one camera
+    could kill the run. Capture was changed to force RTSP over TCP and to release
+    and reopen a stream after a run of failed reads, so one camera recovering does
+    not disturb the others.
+    \item \textit{Configuration lost after a reboot.} The database holding the
+    room-to-camera mapping did not come back automatically, so a session could not
+    start. It was set up to run as a service that starts on boot, and the room
+    records were re-seeded.
+    \item \textit{Slow session start.} Re-encoding the enrolled gallery on every run
+    delayed the first scan. Embeddings are now computed once and cached in
+    \texttt{embeddings.pkl} with a manifest of the source images, so a session loads
+    the vectors instead of rebuilding them.
+    \item \textit{Duplicate attendance rows.} A student in view was logged on every
+    scan, filling the record with repeats. A per-student cooldown was added so a
+    recognized student is written once and then skipped until the window passes.
+    \item \textit{CPU spikes with several cameras.} All cameras scanning on the same
+    tick produced load spikes. Scans are now staggered across the interval, frame
+    reading is separated from recognition, and the scan interval was raised from
+    five to ten seconds, which proved sufficient for attendance while easing the
+    load.
+    \item \textit{Dashboard returning 404.} The static files were being served from
+    the project root rather than the frontend directory, so every page failed to
+    resolve. Serving from the correct root fixed it.
+\end{itemize}
+
+\subsection{Observations and Known Issues}
+Testing surfaced a small set of behaviours worth recording:
+\begin{itemize}
+    \item A student who looks down, or whose face is turned away from every camera,
+    is not detected and therefore not marked. Multiple cameras reduce this but do
+    not remove it.
+    \item Students who never submitted enrollment images are consistently reported
+    as unknown, which is the intended behaviour and a useful check that the
+    matching threshold is not assigning strangers to the closest identity.
+    \item Female students wearing a hijab are sometimes missed by the detector, as
+    a head covering removes part of the facial region the detector relies on. This
+    is the clearest accuracy gap we found and is discussed further in
+    Section~\ref{sec:discussion}.
+\end{itemize}
+
+\subsection{Summary}
+Testing moved deliberately from a laptop webcam to phones, then to installed CCTV,
+and finally to a live lecture, and the system held up at each step. The problems we
+hit were mostly practical - network addressing, stream stability, service startup,
+duplicate records - rather than failures of detection or recognition, and each was
+fixed at the level it belonged to. The remaining gaps, chiefly students who never
+face a camera and the reduced detection of students wearing a hijab, are genuine
+limitations rather than bugs, and they set the agenda for further work.
+
+% ============================================================
+% QA Activities and Methodologies
+% ============================================================
+\section{QA Activities and Methodologies}
+\label{sec:qa}
+
+Quality assurance on this project was continuous rather than a phase at the end.
+Because the system depends on hardware, a network, and models that can fail
+quietly, we leaned on practices that make a failure visible early and easy to
+attribute: small verified commits, staged testing across devices, monitoring of
+timing and load during real sessions, and feedback from the people who actually use
+the dashboard. This section describes those activities and, where our process fell
+short, says so.
+
+\subsection{Code Reviews and Version Control}
+The project is kept under Git with a remote repository, and the history is
+deliberately milestone-driven: a commit is made when a capability is verified to
+work, not merely when code is written. Messages such as ``multiple cam is
+working'', ``IP camera is accessible and recognizing faces correctly'', and
+``recognizing 6 faces together'' record states that were confirmed against real
+hardware, which makes the history itself a log of what was tested and when.
+
+Because the team is small, review was informal peer review of changes before they
+were committed rather than a formal pull-request gate. What mattered more in
+practice was the ability to return to a known-good state. When a series of changes
+left the system misbehaving, we reset the working tree to the last commit that was
+verified against a camera and reapplied work from there, which recovered a working
+system quickly. Keeping each commit tied to a verified capability is what made that
+possible; had commits marked arbitrary points, the history would not have offered a
+trustworthy point to fall back to.
+
+\subsection{Verification Workflow and Continuous Integration}
+Verification in this project was staged and manual rather than automated. Every
+change to the recognition or capture path was exercised by running a real session
+against a known camera and a known gallery, and by checking that the resulting log
+contained the expected students. This was effective because the failure modes that
+concerned us most---an unreachable camera, a stalled stream, a face that is never
+detected---cannot be caught by unit tests in isolation and only appear when the
+whole pipeline runs against real hardware.
+
+We should be clear that no automated continuous-integration pipeline was used. This
+is a genuine gap in our process. Parts of the system are well suited to automated
+testing: parsing the detection log, aggregating raw sightings into one record per
+student, computing attendance duration and its percentage of the class span, and
+matching embeddings against a fixed gallery are all deterministic and could be
+covered by unit tests that run on every commit. Adding such a suite, together with
+a CI job that runs it, is the clearest improvement we could make to the way the
+project is developed, and we treat it as necessary before the system grows to serve
+many rooms.
+
+\subsection{Cross-Platform and Device Testing}
+The capture path was exercised deliberately across different hardware rather than
+against one camera, as described in Section~\ref{sec:testing}. A laptop webcam
+established a baseline with no network involved; a phone camera streamed over the
+network introduced the stream-reading path; several phones at once exercised the
+thread-per-camera design and the shared model; and finally two installed CCTV
+cameras tested the system against the hardware it is meant for. Testing in this
+order is what let us attribute the ``connecting'' failure to the network rather
+than to the recognizer, since the same code had already worked on other cameras.
+
+On the client side, the dashboard is plain HTML, CSS, and JavaScript with no build
+step or framework, which keeps its surface small and its behaviour consistent
+across current browsers. It was checked on desktop and at narrower widths, and in
+both light and dark presentation, so that a teacher starting a class and a student
+checking a record see a usable layout on whatever they have to hand.
+
+\subsection{Performance Monitoring}
+Because recognition competes with capture for the CPU, timing and load were watched
+during real sessions rather than assumed. Monitoring the pipeline while several
+cameras ran together showed load spikes whenever the cameras happened to scan on
+the same tick, which led to three changes: separating continuous frame reading from
+periodic recognition, staggering each camera's scan across the interval, and
+raising the interval from five to ten seconds after confirming that a ten-second
+cadence still captures arrival and departure accurately enough for attendance. We
+also measured what session startup cost and removed it by caching the enrolled
+embeddings, so the first scan no longer waits for the gallery to be re-encoded.
+Stream health was monitored through the per-camera state, which surfaces a camera
+that has gone offline and is retrying instead of letting it fail silently.
+
+\subsection{Usability Testing and Feedback Loops}
+The dashboard was shaped by use rather than designed once. Session control was
+reduced to selecting a course and room and pressing start, on the reasoning that a
+teacher should not have to think about cameras, addresses, or configuration at the
+front of a class; the room-to-camera mapping lives in the database precisely so the
+interface can stay that simple. The attendance-history view, which reports how long
+each student was present as a percentage of the class, was added after it became
+clear that a plain present-or-absent list did not answer what teachers actually
+wanted to know about students who arrive late or leave early. On the student side,
+a read-only lookup by registration number was added so a student can confirm their
+own record without going through a teacher. The interface itself went through
+several passes for readability and contrast. Running a session in a real lecture
+was the strongest usability test available, since it showed that the flow holds up
+under the time pressure of an actual class.
+
+\subsection{Bug Management and Regression Testing}
+Defects found during testing were recorded as they appeared, traced to the layer
+they belonged to, and fixed there rather than worked around at a higher level; the
+main ones and their resolutions are listed in Section~\ref{sec:testing}. Whenever a
+fix touched the capture or recognition path, we re-ran the earlier stages---webcam,
+then phones, then CCTV---before trusting it, since a change made to solve a
+network problem can easily disturb recognition. This staged re-run was our
+regression test, and the milestone commits gave it a reference: if a capability
+that a commit had recorded as working no longer worked, the change responsible lay
+in a short, well-defined range of history. The method is manual and does not scale,
+which is precisely the argument for the automated suite described above.
+
+\subsection{Data Quality and Enrollment Checks}
+Recognition can only be as good as the gallery it matches against, so enrollment
+data received its own checks. Enrollment images must be in a supported format and
+must show the face clearly enough to embed; a poor or missing image means the
+student cannot be identified, which is a data problem rather than a model problem
+and is best caught before a class rather than during one. The embedding cache is
+keyed to a manifest of the source images, so that changes to the enrolled set are
+detected and the cache is rebuilt instead of silently serving stale vectors. During
+recognition trials we deliberately included a student who had submitted no images,
+using the resulting ``unknown'' label as a control: it confirms that the matching
+threshold rejects a stranger rather than assigning them to the nearest identity in
+the gallery, which is the failure that would quietly corrupt an attendance record.
+
+\subsection{Summary}
+Our quality assurance rested on verified milestone commits, staged testing across
+webcam, phone, and CCTV hardware, monitoring of load and timing under real
+sessions, checks on the enrolled data, and feedback gathered from teachers and
+students using the dashboard. Together these caught the problems that mattered:
+network addressing, stream stability, duplicate records, CPU spikes, and gaps in
+the enrolled gallery. The main weakness of the process is its reliance on manual
+verification, and adding an automated test suite with continuous integration is the
+first improvement we would make before the system is extended to more rooms.
+
+% ============================================================
 % Software Reengineering
 % ============================================================
 \section{Software Reengineering}
@@ -485,13 +813,13 @@ The reengineering effort centered on the following activities.
 The original single-file program was split into focused modules: a recognizer that
 loads the models and produces embeddings, a multi-camera capture component that
 manages one worker thread per stream, and a Flask service that exposes the REST
-API. Separating these concerns made the code easier to test and to extend.
+API. Separating these concerns made the code easier to test and to extend.\\
 
 \subsubsection{Configuration and Database Redesign}
 Camera sources and room mappings, once hardcoded in a local file, were moved into a
 MongoDB collection keyed by room. The backend now reads the camera list for a room
 at session start, so cameras can be added or changed without editing the code, and
-credentials stay out of the application source.
+credentials stay out of the application source.\\
 
 \subsubsection{Embedding Caching and Performance Optimization}
 Enrolled faces are embedded once and stored in a cache file
@@ -499,18 +827,18 @@ Enrolled faces are embedded once and stored in a cache file
 system loads these vectors directly rather than re-encoding the gallery, which
 removes the largest fixed cost from startup. A two-rate design further separates
 frame reading from recognition, so the pipeline scans at a fixed interval instead
-of running the model on every frame.
+of running the model on every frame.\\
 
 \subsubsection{Multi-Camera Concurrency}
 Capture was reworked to run one thread per camera against a shared recognition
 model, with scans staggered across the interval so the cameras do not all load the
 CPU at the same moment. Streams are opened over RTSP with a forced TCP transport and
-automatic reconnection, so a brief drop on one camera no longer ends the session.
+automatic reconnection, so a brief drop on one camera no longer ends the session.\\
 
 \subsubsection{UI/UX Modernization}
 The dashboard was rebuilt into a cleaner, editor-style interface with clear session
 controls for teachers and a simple lookup view for students, improving readability
-and making a session easy to start and stop.
+and making a session easy to start and stop.\\
 
 \subsection{Outcomes of Reengineering}
 The reengineering work produced several concrete improvements:
@@ -588,7 +916,7 @@ Beyond a binary present-or-absent record, the system measures how long each stud
 was actually in class. Taking the class span as the earliest arrival to the latest
 departure within a session, it computes each student's presence as the interval
 between their first and last sighting and reports it as both a duration and a
-percentage of the class---for example, 40 of 50 minutes, or 80\%. Students who
+percentage of the class - for example, 40 of 50 minutes, or 80\%. Students who
 arrive late or leave early are marked partially present rather than simply present,
 which gives teachers a finer measure for evaluating participation than a plain
 attendance list.
@@ -616,6 +944,7 @@ practical, and respectful of student privacy.
 % Discussion
 % ============================================================
 \section{Discussion}
+\label{sec:discussion}
 
 Building the Autonomous Attendance System offered a chance to apply face
 recognition to a routine but stubborn administrative task under real classroom
@@ -631,9 +960,9 @@ offline recognition, and a web dashboard. Choosing the InsightFace models proved
 effective: SCRFD handles detection across varied poses and scales, and ArcFace
 produces embeddings that separate identities well~\cite{ref4, ref5}. Running them
 through ONNX Runtime kept inference fast on ordinary hardware. Much of the effort
-went into practical concerns rather than the models themselves---keeping several
+went into practical concerns rather than the models themselves - keeping several
 RTSP streams stable, staggering scans to spread CPU load, and caching embeddings so
-sessions start quickly---which sharpened the team's grasp of concurrency, modular
+sessions start quickly - which sharpened the team's grasp of concurrency, modular
 design, and performance tuning.
 
 \subsection{Achievements and Innovations}
@@ -650,6 +979,9 @@ Key achievements of the project include:
     \item Duration-based partial attendance, reporting each student's time present
     as a percentage of the class length so early leavers and late arrivals are
     graded rather than simply marked present.
+    \item Validation on installed CCTV hardware and, finally, during a live lecture
+    (Section~\ref{sec:testing}), where enrolled students were recognized and marked
+    without interrupting the class.
 \end{itemize}
 These results show that face recognition can support classroom attendance in a
 practical, privacy-preserving way rather than only in controlled experiments.
@@ -662,10 +994,19 @@ The project also ran into several technical and practical limits:
     \item \textit{Distance and resolution:} faces far from the camera occupy few
     pixels, which lowers recognition reliability in large halls.
     \item \textit{Lighting and pose:} strong backlight, low light, or sharply
-    angled faces reduce detection and matching quality.
+    angled faces reduce detection and matching quality. Testing confirmed this: a
+    student looking down or turned away from every camera is never detected, and so
+    is never marked (Section~\ref{sec:testing}).
+    \item \textit{Head coverings:} female students wearing a hijab were sometimes
+    missed by the detector, since a covering hides part of the facial region the
+    detector depends on. This was the clearest accuracy gap observed during testing,
+    and it is a fairness concern as much as a technical one, because the students
+    affected are a specific group rather than a random sample. Closing it will
+    likely require enrollment images that match how a student actually appears in
+    class, and evaluation of detectors on faces with head coverings.
     \item \textit{Enrollment dependence:} recognition is only as good as the
     enrolled gallery, so a student with poor or missing enrollment images will not
-    be identified.
+    be identified. Also, the given images should be in .jpg/.png/.jpeg format
     \item \textit{No liveness check:} the current system does not defend against a
     printed or on-screen photograph held up to a camera.
 \end{itemize}
@@ -704,8 +1045,8 @@ The work reinforced several lessons in building a practical system:
 
 \subsection{Summary}
 The discussion above shows how the system demonstrates a practical, privacy-first
-route to automated attendance while also exposing the real constraints---coverage,
-distance, lighting, and spoofing---of deploying face recognition in a live
+route to automated attendance while also exposing the real constraints - coverage,
+distance, lighting, and spoofing - of deploying face recognition in a live
 classroom. Despite these limits, the project stands as a workable example of
 applying computer vision to a genuine institutional need.
 
@@ -715,8 +1056,8 @@ applying computer vision to a genuine institutional need.
 \section{Future Goals}
 \label{sec:future}
 
-The current system covers attendance end to end, but two extensions would broaden
-what it offers to teachers and students. Both are planned rather than implemented,
+The current system covers attendance end to end, but three extensions would broaden
+what it offers to teachers and students. All are planned rather than implemented,
 and each carries open questions that we intend to study before committing to a
 design.
 
@@ -730,8 +1071,8 @@ states such as happy, sad, angry, or neutral, these labels correspond only loose
 to a student's actual emotion or level of concentration. Distance, pose, and
 lighting in a real classroom make the problem harder still. Rather than ship a
 feature whose output could be misleading, we plan to research the area
-carefully---comparing candidate models and validating them under real classroom
-conditions---and to add engagement monitoring only if we find an approach reliable
+carefully - comparing candidate models and validating them under real classroom
+conditions - and to add engagement monitoring only if we find an approach reliable
 enough to be trusted. Where direct emotion recognition proves too fragile, we will
 consider steadier proxies such as head pose and gaze direction, which indicate
 whether a student is facing the board and are less sensitive to individual
@@ -747,6 +1088,25 @@ enrollment onto the phone would simplify onboarding, keep each student's gallery
 current, and let the roster for a course be built without manual data entry, while
 still respecting the privacy-first design in which face data is stored only as
 embeddings under institutional control.
+
+\subsection{Wide Deployment from a Single Server}
+The third goal is to lift the system from one classroom to a whole IICT building, SUST, so that
+a single server can run and coordinate several sessions at once, each in a
+different room, instead of one machine handling one class at a time. A teacher in
+any room would start a session from the same dashboard, and the server would open
+that room's cameras, track the class, and write its records independently of every
+other session in progress. This turns the current per-room deployment into a
+central service that an institution can operate for its entire building.
+
+The obstacle here is not the design but the equipment. Serving many rooms at once
+calls for real infrastructure: CCTV cameras in every classroom, network switches
+and cabling to bring those streams back to one place, and a server with enough GPU
+capacity to run detection and recognition for several rooms in parallel without
+falling behind the scan interval. Our present deployment runs on a single CPU
+machine covering one room, which is sufficient to demonstrate the pipeline but not
+to carry that load. Reaching this goal therefore depends on securing a fair amount
+of funding for hardware, and we treat it as the natural direction for the project
+once such support is available.
 
 % ============================================================
 % Conclusion
@@ -765,18 +1125,26 @@ local machine, while a Flask backend, a MongoDB configuration store, and a web
 dashboard turn the recognizer into a usable service for teachers and students.
 
 Taken together, these choices address the weaknesses that limit earlier
-systems---single-camera blind spots, the retraining burden of classifier-based
-recognition, and the privacy cost of cloud services---and show that face
+systems - single-camera blind spots, the retraining burden of classifier-based
+recognition, and the privacy cost of cloud services - and show that face
 recognition can support attendance in a way that is accurate, practical, and
-respectful of student data.
+respectful of student data. The system was not left at the prototype stage: it was
+tested in steps from a laptop webcam through phone cameras to CCTV cameras
+installed in Gallery~1 of the IICT Building at SUST, and finally during a live
+lecture, where enrolled students were recognized and marked present without any
+interruption to the class (Section~\ref{sec:testing}).
 
-Several directions remain open. Recognition at long range and under poor lighting
-can be improved with higher-resolution capture and image enhancement, and a
-liveness or anti-spoofing check would guard against photographs held up to a
-camera. Beyond these, the concentration-monitoring and mobile-enrollment goals
-outlined in Section~\ref{sec:future} would extend the system from attendance
-toward richer classroom analytics and easier onboarding. All of these build
-naturally on the modular, privacy-first design established here.
+Several directions remain open. Testing showed that a student who never faces a
+camera is simply never seen, and that students wearing a hijab are detected less
+reliably - a gap that must be closed before the system could be considered fair to
+every student. Recognition at long range and under poor lighting can be improved
+with higher-resolution capture and image enhancement, and a liveness or
+anti-spoofing check would guard against photographs held up to a camera. Beyond
+these, the concentration-monitoring, mobile-enrollment, and campus-wide deployment
+goals outlined in Section~\ref{sec:future} would extend the system from attendance
+toward richer classroom analytics, easier onboarding, and service across a whole
+building. All of these build naturally on the modular, privacy-first design
+established here.
 
 % ============================================================
 % References
@@ -808,29 +1176,36 @@ J.~Deng, J.~Guo, N.~Xue, and S.~Zafeiriou, ``ArcFace: Additive angular margin lo
 for deep face recognition,'' in \emph{Proc. IEEE/CVF Conf. Computer Vision and
 Pattern Recognition (CVPR)}, 2019, pp.~4690--4699.
 
-\bibitem{ref6}
-S.~Chowdhury, S.~Nath, A.~Dey, and A.~Das, ``Development of an automatic class
-attendance system using CNN-based face recognition,'' in \emph{Proc. Emerging
-Technology in Computing, Communication and Electronics (ETCCE)}, 2020, pp.~1--5.
+%  - - Existing systems (commercial products)  - -
+\bibitem{realcoderz}
+RealCoderz, ``Automated attendance system,'' RealCoderz. [Online]. Available:
+\url{https://www.realcoderz.com/}
 
-\bibitem{ref7}
-N.~M. Ara, N.~S. Simul, and M.~S. Islam, ``Convolutional neural network approach
-for vision based student recognition system,'' in \emph{Proc. 20th Int. Conf.
-Computer and Information Technology (ICCIT)}, 2017, pp.~1--6.
+\bibitem{jibble}
+Jibble, ``Face recognition attendance system,'' Jibble Group. [Online]. Available:
+\url{https://www.jibble.io/}
 
-\bibitem{ref8}
-J.~Patel, S.~Gandhi, V.~Katheriya, P.~Pataliya, and A.~Majumdar, ``Enhancing
-classroom attendance systems with face recognition through CCTV using deep
-learning,'' \emph{Procedia Computer Science}, 2025, pp.~3031--3041.
+\bibitem{tipsoi}
+Tipsoi, ``Fastface 5: AI face recognition attendance device,'' Tipsoi. [Online].
+Available: \url{https://tipsoi.com/}
 
-\bibitem{ref9}
-A.~K. Shukla, A.~Shukla, and R.~Singh, ``Automatic attendance system based on
-CNN--LSTM and face recognition,'' \emph{Int. J. Information Technology}, 2023,
-pp.~1293--1301.
+%  - - Existing approaches (journal papers)  - -
+% NOTE: complete the author list, venue, year and pages for the four papers below.
+\bibitem{sams}
+``Smart attendance management system (SAMS): Attendance tracking process in
+educational institution.'' [Authors, venue and year to be added.]
 
-\bibitem{ref10}
-H.~Demir and S.~Sava\c{s}, ``Class attendance system in education with deep
-learning method,'' 2023, arXiv:2309.13317.
+\bibitem{cctvfr}
+``Automated attendance system by facial recognition using CCTV.'' [Authors, venue
+and year to be added.]
+
+\bibitem{avghash}
+``Smart attendance tracking and performance monitoring system based on CCTV camera
+input.'' [Authors, venue and year to be added.]
+
+\bibitem{svmrtsp}
+``Automated attendance system with AI and real-time camera access using facial
+recognition.'' [Authors, venue and year to be added.]
 
 \end{thebibliography}
 

@@ -1,0 +1,10 @@
+MODEL SECTION -- ekhono baki
+
+Euclidian distance threshold
+ONNX runtime
+why flask instead of node
+other models pros and cons
+powerfull gpu add
+partial attendance
+refs check
+why our project can take a load to run different sessions from 4/5rooms running concurrently - solution

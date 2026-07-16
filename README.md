@@ -13,7 +13,7 @@ present, when they arrived, and when they left).
 
 ## 🎥 Demo
 
-[**▶ Watch the demo video**](demoVdo/Demo.mp4) — `demoVdo/Demo.mp4`
+![Live classroom test — students recognized and marked present](Diagrams/finalTest.png)
 
 > Recognizing multiple students live from a wired Hikvision IP camera and logging
 > their attendance automatically.
@@ -92,7 +92,7 @@ frontend/
   teacher/               Teacher dashboard (login, controls, reports)
   student/               Student view (look up own attendance)
 images/<regno>/          Reference photos, one folder per student
-demoVdo/Deno.mp4         Demo video
+Diagrams/                Diagrams and test screenshots (incl. finalTest.png)
 workflow.md              Detailed explanation of the whole pipeline
 ```
 
