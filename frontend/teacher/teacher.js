@@ -22,6 +22,12 @@
     el.className = "toast" + (kind ? " " + kind : "");
   }
 
+  // "HH:MM:SS" -> seconds since midnight.
+  function timeToSec(t) {
+    const [h, m, s = 0] = String(t).split(":").map(Number);
+    return h * 3600 + m * 60 + s;
+  }
+
   // --- Init UI -----------------------------------------------------------
   function fillSelect(sel, items) {
     // keep the disabled placeholder (first option), drop the rest, then refill
@@ -45,6 +51,8 @@
     }
     fillSelect($("course"), courses);
     fillSelect($("room"), rooms);
+    fillSelect($("histCourse"), courses);
+    fillSelect($("histRoom"), rooms);
   }
   loadDropdowns();
 
@@ -209,12 +217,97 @@
     Report.download(name, JSON.stringify(currentReport, null, 2), "application/json");
   }
 
+  // --- C. Attendance history --------------------------------------------
+  async function viewHistory() {
+    const course = $("histCourse").value;
+    const room = $("histRoom").value;
+    const date = $("histDate").value;   // yyyy-mm-dd (empty if not chosen)
+
+    if (!course || !room || !date) {
+      toast($("histToast"), "Select a course, room, and date first.", "err");
+      return;
+    }
+
+    toast($("histToast"), "Loading attendance…");
+    let sessions;
+    try {
+      sessions = await AttendanceAPI.fetchAllReports();
+    } catch (err) {
+      toast($("histToast"), "Could not reach the server. Is the backend running?", "err");
+      return;
+    }
+
+    // Collect rows for sessions matching course + room on that date. For each
+    // session, the class span = earliest first-seen to latest last-seen across
+    // its attendees; each student's duration = their (last - first) seen.
+    const rows = [];
+    for (const s of sessions || []) {
+      if (s.courseName !== course || s.room !== room) continue;
+      const att = (s.attendance || []).filter((a) => a.date === date);
+      if (!att.length) continue;
+
+      let minStart = Infinity, maxEnd = -Infinity;
+      for (const a of att) {
+        minStart = Math.min(minStart, timeToSec(a.startTime));
+        maxEnd = Math.max(maxEnd, timeToSec(a.endTime));
+      }
+      const totalSec = Math.max(0, maxEnd - minStart);
+
+      for (const a of att) {
+        const attendSec = Math.max(0, timeToSec(a.endTime) - timeToSec(a.startTime));
+        rows.push({
+          regno: a.regno,
+          courseName: s.courseName,
+          room: s.room,
+          date: a.date,
+          startTime: a.startTime,
+          endTime: a.endTime,
+          attendMin: Math.round(attendSec / 60),
+          totalMin: Math.round(totalSec / 60),
+          pct: totalSec > 0 ? Math.round((attendSec / totalSec) * 100) : 0,
+        });
+      }
+    }
+
+    rows.sort((x, y) => x.startTime.localeCompare(y.startTime) || x.regno.localeCompare(y.regno));
+
+    const tbody = $("histTable").querySelector("tbody");
+    tbody.innerHTML = "";
+
+    if (!rows.length) {
+      $("histArea").style.display = "none";
+      $("histEmpty").style.display = "block";
+      $("histMeta").textContent = "";
+      toast($("histToast"), `No attendance for ${course} · Room ${room} on ${date}.`, "");
+      return;
+    }
+
+    for (const r of rows) {
+      const cls = r.pct >= 75 ? "full" : "partial";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span class="reg">${r.regno}</span></td>
+        <td>${r.courseName}</td>
+        <td>${r.room}</td>
+        <td>${r.date}</td>
+        <td>${r.startTime}</td>
+        <td>${r.endTime}</td>
+        <td>${r.attendMin}/${r.totalMin} min <span class="badge ${cls}">${r.pct}%</span></td>`;
+      tbody.appendChild(tr);
+    }
+    $("histArea").style.display = "block";
+    $("histEmpty").style.display = "none";
+    $("histMeta").textContent = `${rows.length} student${rows.length > 1 ? "s" : ""} present`;
+    toast($("histToast"), "", "ok");
+  }
+
   // --- Wire up -----------------------------------------------------------
   $("startBtn").addEventListener("click", startClass);
   $("stopBtn").addEventListener("click", endClass);
   $("loadCsvBtn").addEventListener("click", loadCsv);
   $("saveBtn").addEventListener("click", saveAttendance);
   $("downloadBtn").addEventListener("click", downloadJson);
+  $("histBtn").addEventListener("click", viewHistory);
 
   refreshStartEnabled();
 })();

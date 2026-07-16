@@ -1,0 +1,40 @@
+%% System Flowchart --- Autonomous Attendance System with Face Recognition
+%% Paste into https://mermaid.live and export as PNG/SVG.
+
+flowchart TD
+    A([Teacher opens dashboard]) --> B[Select course and room]
+    B --> C[Click Start &mdash; Flask backend receives request]
+    C --> D[(MongoDB: fetch cameras for the room)]
+    D --> E[Load cached embeddings.pkl]
+    E --> F[Launch capture: one thread per RTSP camera]
+
+    F --> G{Session running?}
+    G -- No --> P[Stop all camera threads]
+    G -- Yes --> H[Read frame from camera stream]
+    H --> I{Scan interval reached?}
+    I -- No --> G
+    I -- Yes --> J[SCRFD: detect faces in frame]
+    J --> K{Face detected?}
+    K -- No --> G
+    K -- Yes --> L[ArcFace: extract 512-D embedding]
+    L --> M[Match embedding against enrolled database]
+    M --> N{Student recognized?}
+    N -- No --> G
+    N -- Yes --> O{Within cooldown window?}
+    O -- Yes --> G
+    O -- No --> Q[Log reg. no to CSV &mdash; set first/last seen]
+    Q --> G
+
+    P --> R[Teacher clicks Save]
+    R --> S[Aggregate CSV into per-student report]
+    S --> T[(Persist report to db.json)]
+    T --> U[Student looks up registration number]
+    U --> V([View attendance history])
+
+    %% ---------- Styling ----------
+    classDef startend fill:#0e639c,stroke:#0b4e7d,color:#ffffff,font-weight:bold;
+    classDef decision fill:#fff4d6,stroke:#c9a94b,color:#1e1e1e;
+    classDef store fill:#e7f0e9,stroke:#4d8a5b,color:#1e1e1e;
+    class A,V startend;
+    class G,I,K,N,O decision;
+    class D,T store;

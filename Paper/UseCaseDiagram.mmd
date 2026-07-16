@@ -1,0 +1,44 @@
+%% Use Case Diagram --- Autonomous Attendance System with Face Recognition
+%% Mermaid renders use cases as a flowchart (no native UML use-case type).
+%% Paste into https://mermaid.live or any Mermaid-enabled editor.
+
+flowchart LR
+    %% ---------- Actors ----------
+    Teacher([" Teacher "])
+    Student([" Student "])
+    Engine([" Autonomous Recognition Engine "])
+
+    %% ---------- System boundary + use cases ----------
+    subgraph System["Autonomous Attendance System"]
+        direction TB
+        UC1(("User<br/>Authentication"))
+        UC2(("Session Control<br/>(Start / Stop Class)"))
+        UC3(("Real-Time Biometric<br/>Face Processing"))
+        UC4(("Automated<br/>Database Logging"))
+        UC5(("Report Generation<br/>& Tracking"))
+    end
+
+    %% ---------- Teacher interactions ----------
+    Teacher --> UC1
+    Teacher --> UC2
+    Teacher --> UC5
+
+    %% ---------- Student interactions ----------
+    Student --> UC5
+
+    %% ---------- System actor interactions ----------
+    Engine --> UC3
+    Engine --> UC4
+
+    %% ---------- Internal include/flow relationships ----------
+    UC2 -. include .-> UC3
+    UC3 -. include .-> UC4
+    UC4 -. include .-> UC5
+
+    %% ---------- Styling ----------
+    classDef actor fill:#0e639c,stroke:#0b4e7d,color:#ffffff,font-weight:bold;
+    classDef usecase fill:#f5f5f5,stroke:#454545,color:#1e1e1e;
+    class Teacher,Student,Engine actor;
+    class UC1,UC2,UC3,UC4,UC5 usecase;
+
+    style System fill:#ffffff,stroke:#888888,stroke-width:1px,color:#333333;

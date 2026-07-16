@@ -6,6 +6,7 @@
   <title>Dashboard · Smart Attendance</title>
   <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
   <link rel="stylesheet" href="../shared/styles.css" />
+  <script src="../shared/theme.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -94,6 +95,44 @@
       </div>
       <div class="empty" id="reportEmpty">No session report yet.</div>
       <div class="toast" id="reportToast"></div>
+    </section>
+
+    <!-- Attendance history: browse any past saved session -->
+    <section class="card">
+      <p class="eyebrow">Attendance history</p>
+      <p class="hint">Pick a course, room, and date to see every student marked present in that session.</p>
+
+      <div class="row" style="margin-bottom: 8px;">
+        <div class="field">
+          <label for="histCourse">Course</label>
+          <select id="histCourse">
+            <option value="" disabled selected>Select course</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="histRoom">Room number</label>
+          <select id="histRoom">
+            <option value="" disabled selected>Select room</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="histDate">Date</label>
+          <input type="date" id="histDate" />
+        </div>
+        <button id="histBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>View</button>
+        <span class="muted" id="histMeta"></span>
+      </div>
+
+      <div id="histArea" style="display:none;">
+        <table id="histTable">
+          <thead>
+            <tr><th>Reg No</th><th>Course</th><th>Room</th><th>Date</th><th>Start Time</th><th>End Time</th><th>Duration</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty" id="histEmpty">No attendance found for that selection.</div>
+      <div class="toast" id="histToast"></div>
     </section>
   </main>
 

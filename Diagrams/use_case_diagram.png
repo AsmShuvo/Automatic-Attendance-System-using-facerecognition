@@ -1,0 +1,92 @@
+<svg width="960" height="600" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" font-family="Arial, Helvetica, sans-serif">
+  <rect width="960" height="600" fill="white"/>
+
+  <!-- System boundary -->
+  <rect x="230" y="40" width="500" height="520" fill="white" stroke="black" stroke-width="1.5"/>
+  <text x="480" y="65" text-anchor="middle" font-size="16" font-weight="bold">Autonomous Attendance System</text>
+
+  <!-- Use case ovals -->
+  <ellipse cx="480" cy="130" rx="150" ry="34" fill="white" stroke="black" stroke-width="1.3"/>
+  <text x="480" y="126" text-anchor="middle" font-size="13">Start / Stop Class</text>
+  <text x="480" y="142" text-anchor="middle" font-size="13">Session</text>
+
+  <ellipse cx="480" cy="230" rx="150" ry="34" fill="white" stroke="black" stroke-width="1.3"/>
+  <text x="480" y="226" text-anchor="middle" font-size="13">Real-Time Face</text>
+  <text x="480" y="242" text-anchor="middle" font-size="13">Recognition</text>
+
+  <ellipse cx="480" cy="330" rx="150" ry="34" fill="white" stroke="black" stroke-width="1.3"/>
+  <text x="480" y="326" text-anchor="middle" font-size="13">Automated Attendance</text>
+  <text x="480" y="342" text-anchor="middle" font-size="13">Logging</text>
+
+  <ellipse cx="480" cy="430" rx="150" ry="34" fill="white" stroke="black" stroke-width="1.3"/>
+  <text x="480" y="426" text-anchor="middle" font-size="13">Save &amp; Export</text>
+  <text x="480" y="442" text-anchor="middle" font-size="13">Report</text>
+
+  <ellipse cx="480" cy="530" rx="150" ry="34" fill="white" stroke="black" stroke-width="1.3"/>
+  <text x="480" y="526" text-anchor="middle" font-size="13">View Attendance</text>
+  <text x="480" y="542" text-anchor="middle" font-size="13">History</text>
+
+  <!-- Arrow marker definitions -->
+  <defs>
+    <marker id="incl" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6" fill="none" stroke="black" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <!-- include dependencies (dashed, downward chain) -->
+  <line x1="480" y1="164" x2="480" y2="196" stroke="black" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#incl)"/>
+  <text x="510" y="184" font-size="11" font-style="italic">&#171;include&#187;</text>
+
+  <line x1="480" y1="264" x2="480" y2="296" stroke="black" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#incl)"/>
+  <text x="510" y="284" font-size="11" font-style="italic">&#171;include&#187;</text>
+
+  <line x1="480" y1="364" x2="480" y2="396" stroke="black" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#incl)"/>
+  <text x="510" y="384" font-size="11" font-style="italic">&#171;include&#187;</text>
+
+  <!-- ===== Actors: LEFT (Teacher, Student) ===== -->
+  <!-- Teacher -->
+  <g stroke="black" stroke-width="1.3" fill="none">
+    <circle cx="100" cy="120" r="12" fill="white"/>
+    <line x1="100" y1="132" x2="100" y2="175"/>
+    <line x1="70" y1="150" x2="130" y2="150"/>
+    <line x1="100" y1="175" x2="78" y2="205"/>
+    <line x1="100" y1="175" x2="122" y2="205"/>
+  </g>
+  <text x="100" y="225" text-anchor="middle" font-size="13" font-weight="bold">Teacher</text>
+
+  <!-- Student -->
+  <g stroke="black" stroke-width="1.3" fill="none">
+    <circle cx="100" cy="330" r="12" fill="white"/>
+    <line x1="100" y1="342" x2="100" y2="385"/>
+    <line x1="70" y1="360" x2="130" y2="360"/>
+    <line x1="100" y1="385" x2="78" y2="415"/>
+    <line x1="100" y1="385" x2="122" y2="415"/>
+  </g>
+  <text x="100" y="435" text-anchor="middle" font-size="13" font-weight="bold">Student</text>
+
+  <!-- ===== Actor: RIGHT (Autonomous Recognition Engine) ===== -->
+  <g stroke="black" stroke-width="1.3" fill="none">
+    <circle cx="870" cy="220" r="12" fill="white"/>
+    <line x1="870" y1="232" x2="870" y2="275"/>
+    <line x1="840" y1="250" x2="900" y2="250"/>
+    <line x1="870" y1="275" x2="848" y2="305"/>
+    <line x1="870" y1="275" x2="892" y2="305"/>
+  </g>
+  <text x="870" y="330" text-anchor="middle" font-size="12" font-weight="bold">Autonomous</text>
+  <text x="870" y="345" text-anchor="middle" font-size="12" font-weight="bold">Recognition Engine</text>
+
+  <!-- ===== Actor-to-usecase associations (solid lines) ===== -->
+  <!-- Teacher -> Start/Stop Session -->
+  <line x1="130" y1="140" x2="330" y2="130" stroke="black" stroke-width="1"/>
+  <!-- Teacher -> Save & Export Report -->
+  <line x1="130" y1="150" x2="330" y2="430" stroke="black" stroke-width="1"/>
+
+  <!-- Student -> View Attendance History -->
+  <line x1="130" y1="340" x2="330" y2="530" stroke="black" stroke-width="1"/>
+
+  <!-- Recognition Engine -> Real-Time Face Recognition -->
+  <line x1="840" y1="235" x2="630" y2="230" stroke="black" stroke-width="1"/>
+  <!-- Recognition Engine -> Automated Attendance Logging -->
+  <line x1="840" y1="245" x2="630" y2="330" stroke="black" stroke-width="1"/>
+
+</svg>
