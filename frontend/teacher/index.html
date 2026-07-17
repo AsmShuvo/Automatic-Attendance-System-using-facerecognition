@@ -94,6 +94,14 @@
         </table>
       </div>
       <div class="empty" id="reportEmpty">No session report yet.</div>
+
+      <div class="row" style="margin-top:14px;">
+        <div class="field">
+          <label for="reportEmail">Send report to</label>
+          <input type="email" id="reportEmail" placeholder="teacher@example.com" />
+        </div>
+        <button class="ghost" id="emailReportBtn" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>Send report via email</button>
+      </div>
       <div class="toast" id="reportToast"></div>
     </section>
 
@@ -132,6 +140,14 @@
         </table>
       </div>
       <div class="empty" id="histEmpty">No attendance found for that selection.</div>
+
+      <div class="row" style="margin-top:14px;">
+        <div class="field">
+          <label for="histEmail">Send report to</label>
+          <input type="email" id="histEmail" placeholder="teacher@example.com" />
+        </div>
+        <button class="ghost" id="emailHistBtn" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>Send report via email</button>
+      </div>
       <div class="toast" id="histToast"></div>
     </section>
   </main>

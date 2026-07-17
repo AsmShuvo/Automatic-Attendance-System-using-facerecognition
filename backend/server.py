@@ -255,6 +255,68 @@ def latest_report():
     return jsonify(sessions[-1] if sessions else None)
 
 
+def _fmt_attendance_email(course, room, date, rows) -> tuple:
+    """Build (subject, body) for an attendance email from a list of rows.
+
+    Each row: {regno, date, startTime, endTime, [attendMin, totalMin, pct]}.
+    """
+    title_bits = [b for b in (course, ("Room " + room) if room else "", date) if b]
+    subject = "Attendance report — " + " · ".join(title_bits) if title_bits else "Attendance report"
+
+    lines = [subject, "=" * len(subject), ""]
+    lines.append(f"Students present: {len(rows)}")
+    lines.append("")
+    header = f"{'Reg No':<14}{'Date':<12}{'Start':<10}{'End':<10}Duration"
+    lines.append(header)
+    lines.append("-" * len(header))
+    for r in rows:
+        dur = ""
+        if "attendMin" in r and "totalMin" in r:
+            pct = f" ({r['pct']}%)" if "pct" in r else ""
+            dur = f"{r['attendMin']}/{r['totalMin']} min{pct}"
+        lines.append(
+            f"{str(r.get('regno','')):<14}"
+            f"{str(r.get('date','')):<12}"
+            f"{str(r.get('startTime','')):<10}"
+            f"{str(r.get('endTime','')):<10}"
+            f"{dur}"
+        )
+    lines.append("")
+    lines.append("Sent by the Autonomous Attendance System.")
+    return subject, "\n".join(lines)
+
+
+@app.route("/api/report/email", methods=["POST"])
+def email_report():
+    """Email an attendance report (session or history) to the given address.
+
+    Body: { to, course, room, date, rows: [...] }
+    """
+    import mailer
+
+    data = request.get_json(silent=True) or {}
+    to_addr = (data.get("to") or "").strip()
+    rows = data.get("rows") or []
+
+    if not to_addr or "@" not in to_addr:
+        return jsonify({"ok": False, "error": "A valid email address is required."}), 400
+    if not rows:
+        return jsonify({"ok": False, "error": "There is no attendance to send."}), 400
+
+    subject, body = _fmt_attendance_email(
+        data.get("course"), data.get("room"), data.get("date"), rows
+    )
+
+    try:
+        mailer.send_email(to_addr, subject, body)
+    except mailer.MailNotConfigured as e:
+        return jsonify({"ok": False, "error": f"Email not set up: {e}"}), 503
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Could not send email: {e}"}), 500
+
+    return jsonify({"ok": True, "sent_to": to_addr, "count": len(rows)})
+
+
 if __name__ == "__main__":
     print("Smart Attendance backend on http://localhost:8000")
     app.run(host="0.0.0.0", port=8000, threaded=True)

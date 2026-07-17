@@ -36,3 +36,7 @@ config.json
 .session_cameras.json
 db/mongo-data/
 db/mongo.log
+
+# Gmail OAuth secrets — never commit these
+backend/gmail_client.json
+backend/gmail_token.json

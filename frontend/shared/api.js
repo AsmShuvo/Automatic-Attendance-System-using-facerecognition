@@ -67,5 +67,20 @@
       if (!res.ok) throw new Error(`reports -> HTTP ${res.status}`);
       return res.json();
     },
+
+    // Email an attendance report (session or history) to a teacher.
+    // payload: { to, course, room, date, rows: [...] }
+    async emailReport(payload) {
+      const res = await fetch(API_BASE + "/api/report/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload || {}),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || `email -> HTTP ${res.status}`);
+      }
+      return data;
+    },
   };
 })();

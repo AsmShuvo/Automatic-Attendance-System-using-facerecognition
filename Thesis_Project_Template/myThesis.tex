@@ -1,0 +1,43 @@
+\documentclass[a4paper,oneside,11pt]{report}
+\usepackage{myStyle}
+
+\begin{document}
+\pagenumbering{Alph}
+\pagestyle{empty}
+\input{./tex/frontPages}
+\pagestyle{plain}
+\clearpage\pagenumbering{Roman}
+\addcontentsline{toc}{section}{Abstract}
+\input{./tex/abstract}
+\clearpage
+\addcontentsline{toc}{section}{Acknowledgements}
+\input{./tex/acknowledgements}
+\clearpage
+\addcontentsline{toc}{section}{Table of Contents}
+\tableofcontents
+\clearpage
+\addcontentsline{toc}{section}{\listtablename}
+\listoftables
+\clearpage
+\addcontentsline{toc}{section}{\listfigurename}
+\listoffigures
+\clearpage\pagenumbering{arabic}
+
+\input{./tex/introduction} %includes Introduction chapter
+\input{./tex/chapter2} %includes Background chapter
+\input{./tex/chapter3} %includes Related Work chapter
+\input{./tex/chapter4} %includes Proposal chapter
+%include as many chapters as you want
+\input{./tex/conclusion}
+
+\addcontentsline{toc}{chapter}{References}
+\clearpage
+
+\renewcommand\bibname{References}
+\bibliographystyle{IEEEtran}
+\bibliography{IEEEabrv, ref_file} % ref_file is the name of the reference file
+\begin{appendices}
+	\input{./tex/appendix}
+\end{appendices}
+
+\end{document}

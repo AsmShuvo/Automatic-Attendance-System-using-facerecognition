@@ -16,6 +16,7 @@
   let startedAt = null;
   let rawCsvText = null;     // raw attendance CSV from the session
   let currentReport = null;  // aggregated report object
+  let lastHistory = null;    // last viewed history: { course, room, date, rows }
 
   function toast(el, msg, kind = "") {
     el.textContent = msg;
@@ -182,6 +183,7 @@
     currentReport = Report.aggregate(scans, { course, room });
     renderReport(currentReport);
     $("downloadBtn").disabled = false;
+    $("emailReportBtn").disabled = !currentReport.attendance.length;
 
     // Persist to db/db.json via the backend.
     try {
@@ -278,9 +280,14 @@
       $("histArea").style.display = "none";
       $("histEmpty").style.display = "block";
       $("histMeta").textContent = "";
+      lastHistory = null;
+      $("emailHistBtn").disabled = true;
       toast($("histToast"), `No attendance for ${course} · Room ${room} on ${date}.`, "");
       return;
     }
+
+    lastHistory = { course, room, date, rows };
+    $("emailHistBtn").disabled = false;
 
     for (const r of rows) {
       const cls = r.pct >= 75 ? "full" : "partial";
@@ -301,6 +308,63 @@
     toast($("histToast"), "", "ok");
   }
 
+  // --- D. Email a report -------------------------------------------------
+  async function sendEmail({ inputId, toastEl, btnId, payload }) {
+    const to = $(inputId).value.trim();
+    if (!to || !to.includes("@")) {
+      toast(toastEl, "Enter a valid email address.", "err");
+      return;
+    }
+    const btn = $(btnId);
+    btn.disabled = true;
+    toast(toastEl, `Sending report to ${to}…`);
+    try {
+      const res = await AttendanceAPI.emailReport({ ...payload, to });
+      toast(toastEl, `Report sent to ${res.sent_to} (${res.count} student(s)).`, "ok");
+    } catch (err) {
+      toast(toastEl, "Could not send: " + err.message, "err");
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function emailSessionReport() {
+    if (!currentReport || !currentReport.attendance.length) {
+      toast($("reportToast"), "Save an attendance report first.", "err");
+      return;
+    }
+    const { course, room } = selection();
+    sendEmail({
+      inputId: "reportEmail",
+      toastEl: $("reportToast"),
+      btnId: "emailReportBtn",
+      payload: {
+        course: course || currentReport.courseName,
+        room: room || currentReport.room,
+        date: currentReport.attendance[0] ? currentReport.attendance[0].date : "",
+        rows: currentReport.attendance,
+      },
+    });
+  }
+
+  function emailHistory() {
+    if (!lastHistory) {
+      toast($("histToast"), "Load an attendance history first.", "err");
+      return;
+    }
+    sendEmail({
+      inputId: "histEmail",
+      toastEl: $("histToast"),
+      btnId: "emailHistBtn",
+      payload: {
+        course: lastHistory.course,
+        room: lastHistory.room,
+        date: lastHistory.date,
+        rows: lastHistory.rows,
+      },
+    });
+  }
+
   // --- Wire up -----------------------------------------------------------
   $("startBtn").addEventListener("click", startClass);
   $("stopBtn").addEventListener("click", endClass);
@@ -308,6 +372,8 @@
   $("saveBtn").addEventListener("click", saveAttendance);
   $("downloadBtn").addEventListener("click", downloadJson);
   $("histBtn").addEventListener("click", viewHistory);
+  $("emailReportBtn").addEventListener("click", emailSessionReport);
+  $("emailHistBtn").addEventListener("click", emailHistory);
 
   refreshStartEnabled();
 })();

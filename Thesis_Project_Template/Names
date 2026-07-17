@@ -1,0 +1,41 @@
+ student names: Asm Shahrier Parvaz Regno: 2020331070 Chonchol Kumar Ray 2020331072 Supervisor:
+  Mohammad Abdullah Al Mumin, PhD,
+  Date: 19 July, 2026
+  use the varsityLogo in the first page only. 
+
+  (small text)A Project submitted to the 
+  new line: (Medium)Department of Computer Science and Engineering
+  new line: (Large) Shahjalal University of Science and Technology
+  new line: (small) in partial fulfillment of the requirements for the
+degree of Bachelor of Science in Computer Science and Engineering
+
+Head of the Dept. and Chairman, Exam.
+Committee: Dr. Md Forhad Rabbi, 
+SMIEEE
+Professor and Head 
+Dept. of CSE, SUST
+
+add an 'Acknoeledgements' section after Abstract and before Table of Contents.
+Example:
+Acknowledgements
+We would like to express our heartfelt gratitude to everyone who supported and guided us
+throughout the planning and development of this project, DishView: Visualize Before You Bite.
+This project would not have been possible without their encouragement, expertise, and assistance.
+First and foremost, we extend our sincere thanks to our supervisor, Dr. Sadia Sultana for her
+invaluable guidance, insightful feedback, and continuous encouragement. Her interest and expertise
+in augmented reality was instrumental in helping us navigate challenges and refine our work.
+We also wish to thank our department for providing us with the necessary resources, facilities,
+and a conducive environment for innovation and development. Also we are deeply grateful to
+our families and friends for their unwavering support, patience, and motivation throughout this
+journey. Their belief in us inspired us to strive for excellence and plan this project successfully.
+This acknowledgment is a small token of appreciation for all those who contributed to the success
+of our project, directly or indirectly. Thank you all for your invaluable support.
+Example 2: We extend our heartfelt gratitude to our supervisor, Md. Eamin Rahman, Assistant Professor
+of the Department of Computer Science and Engineering at Shahjalal University of Science and
+Technology, for his invaluable guidance and support throughout this project. His expertise and
+encouragement have been pivotal in its successful completion.
+
+here we'll ack our supervisor, Dr. Mohammad Abdullah Al Mumin, PhD, for his invaluable guidance, insightful feedback, and continuous encouragement throughout the development of this project. His expertise in computer science and engineering has been instrumental in helping us navigate challenges and refine our work. He also funded us for equipments to complete the project. 
+
+
+update the latex
