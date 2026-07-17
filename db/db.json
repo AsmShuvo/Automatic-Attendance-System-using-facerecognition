@@ -442,5 +442,33 @@
         "endTime": "09:11:46"
       }
     ]
+  },
+  {
+    "classid": "Lab_MAT201_2026-07-18_01:36:27",
+    "courseName": "MAT201",
+    "room": "Lab",
+    "savedAt": "2026-07-17T19:37:10.224Z",
+    "attendance": [
+      {
+        "regno": "2020331070",
+        "date": "2026-07-18",
+        "startTime": "01:36:27",
+        "endTime": "01:36:46"
+      }
+    ]
+  },
+  {
+    "classid": "Lab_MAT201_2026-07-18_01:37:28",
+    "courseName": "MAT201",
+    "room": "Lab",
+    "savedAt": "2026-07-17T19:38:17.991Z",
+    "attendance": [
+      {
+        "regno": "2020331070",
+        "date": "2026-07-18",
+        "startTime": "01:37:28",
+        "endTime": "01:38:07"
+      }
+    ]
   }
 ]

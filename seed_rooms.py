@@ -22,6 +22,10 @@ ROOMS = {
     "G2": [
         {"name": "gtech", "source": "rtsp://admin:chonchol72@10.100.32.124:554/user=admin&password=chonchol72&channel=1&stream=0.sdp?"},
     ],
+    # DroidCam on a phone over Wi-Fi (MJPEG stream at /video).
+    "Lab": [
+        {"name": "droidcam", "source": "http://192.168.0.100:4747/video"},
+    ],
 }
 
 
