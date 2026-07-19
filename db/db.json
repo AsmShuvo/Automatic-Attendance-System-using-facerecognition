@@ -470,5 +470,39 @@
         "endTime": "01:38:07"
       }
     ]
+  },
+  {
+    "classid": "Lab_CSE413_2026-07-18_18:55:39",
+    "courseName": "CSE413",
+    "room": "Lab",
+    "savedAt": "2026-07-18T12:56:12.950Z",
+    "attendance": [
+      {
+        "regno": "2020331072",
+        "date": "2026-07-18",
+        "startTime": "18:55:39",
+        "endTime": "18:55:59"
+      },
+      {
+        "regno": "2020331070",
+        "date": "2026-07-18",
+        "startTime": "18:55:59",
+        "endTime": "18:55:59"
+      }
+    ]
+  },
+  {
+    "classid": "Lab_EEE101_2026-07-19_10:57:14",
+    "courseName": "EEE101",
+    "room": "Lab",
+    "savedAt": "2026-07-19T04:57:44.579Z",
+    "attendance": [
+      {
+        "regno": "2020331070",
+        "date": "2026-07-19",
+        "startTime": "10:57:14",
+        "endTime": "10:57:14"
+      }
+    ]
   }
 ]

@@ -1,0 +1,45 @@
+%% ArcFace architecture (simplified) --- face recognizer used in this project.
+%% A ResNet-50 backbone maps an aligned face to a 512-D embedding. Training adds
+%% an Additive Angular Margin to the angle between the embedding and its class
+%% weight, giving well-separated identities. At inference the embedding is matched
+%% against the enrolled gallery by cosine similarity.
+%% Paste into https://mermaid.live and export as PNG/SVG.
+
+flowchart TB
+    IN["Aligned face crop<br/>(112x112, from SCRFD landmarks)"] --> BB["Backbone<br/>ResNet-50"]
+    BB --> EMB["Embedding layer<br/>512-D feature vector"]
+    EMB --> NORM["L2-normalise<br/>(feature on unit hypersphere)"]
+
+    subgraph TRAIN["Training only — ArcFace loss"]
+        direction TB
+        WN["Normalised class weights W"]
+        COS["cos(theta) = W . x<br/>(angle to each identity centre)"]
+        MARGIN["Add angular margin:<br/>cos(theta + m)"]
+        SCALE["Scale by s → softmax<br/>cross-entropy loss"]
+        WN --> COS --> MARGIN --> SCALE
+    end
+
+    subgraph INFER["Inference — recognition"]
+        direction TB
+        GAL["Enrolled gallery<br/>embeddings.pkl"]
+        SIM["Cosine similarity<br/>vs each enrolled face"]
+        DEC{"Best score above<br/>match threshold?"}
+        GAL --> SIM --> DEC
+        DEC -- yes --> ID["Recognised: reg. no."]
+        DEC -- no --> UNK["Unknown"]
+    end
+
+    NORM --> COS
+    NORM --> SIM
+
+    %% ---------- Styling ----------
+    classDef io fill:#0e639c,stroke:#0b4e7d,color:#ffffff,font-weight:bold;
+    classDef core fill:#eef3fb,stroke:#4a6fa5,color:#1e1e1e;
+    classDef train fill:#fde8ef,stroke:#c2557a,color:#1e1e1e;
+    classDef infer fill:#e7f0e9,stroke:#4d8a5b,color:#1e1e1e;
+    classDef decision fill:#fff4d6,stroke:#c9a94b,color:#1e1e1e;
+    class IN,ID io;
+    class BB,EMB,NORM core;
+    class WN,COS,MARGIN,SCALE train;
+    class GAL,SIM,UNK infer;
+    class DEC decision;

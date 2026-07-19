@@ -24,7 +24,7 @@ ROOMS = {
     ],
     # DroidCam on a phone over Wi-Fi (MJPEG stream at /video).
     "Lab": [
-        {"name": "droidcam", "source": "http://192.168.0.100:4747/video"},
+        {"name": "droidcam", "source": "http://192.168.201.45:4747/video"},
     ],
 }
 

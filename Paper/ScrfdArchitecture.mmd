@@ -1,0 +1,52 @@
+%% SCRFD architecture (simplified) --- face detector used in this project.
+%% Key idea: Sample and Computation Redistribution. A ResNet backbone feeds an
+%% FPN neck; compute is shifted toward the shallow, high-resolution stages where
+%% small faces live. Each pyramid level has a shared head predicting, per anchor,
+%% a face/no-face score, a bounding box, and five facial landmarks.
+%% Paste into https://mermaid.live and export as PNG/SVG.
+
+flowchart TB
+    IN["Input image<br/>(classroom frame)"] --> BB
+
+    subgraph BB["Backbone (ResNet) — redistributed compute"]
+        direction TB
+        C2["Stage C2<br/>high-res / small faces"]
+        C3["Stage C3<br/>medium faces"]
+        C4["Stage C4<br/>large faces"]
+        C2 --> C3 --> C4
+    end
+
+    subgraph NECK["Neck — Feature Pyramid (FPN)"]
+        direction TB
+        P3["P3 (stride 8)"]
+        P4["P4 (stride 16)"]
+        P5["P5 (stride 32)"]
+    end
+
+    C2 --> P3
+    C3 --> P4
+    C4 --> P5
+    P5 -. top-down .-> P4 -. top-down .-> P3
+
+    subgraph HEAD["Shared detection head (per pyramid level)"]
+        direction LR
+        CLS["Classification<br/>face / background"]
+        REG["Bbox regression<br/>x, y, w, h"]
+        KPS["Landmark regression<br/>5 points"]
+    end
+
+    P3 --> HEAD
+    P4 --> HEAD
+    P5 --> HEAD
+
+    HEAD --> NMS["Decode anchors<br/>+ Non-Max Suppression"]
+    NMS --> OUT["Detected faces:<br/>box + 5 landmarks each"]
+    OUT --> NEXT["Align crop → ArcFace"]
+
+    %% ---------- Styling ----------
+    classDef io fill:#0e639c,stroke:#0b4e7d,color:#ffffff,font-weight:bold;
+    classDef stage fill:#eef3fb,stroke:#4a6fa5,color:#1e1e1e;
+    classDef head fill:#fff4d6,stroke:#c9a94b,color:#1e1e1e;
+    class IN,OUT,NEXT io;
+    class C2,C3,C4,P3,P4,P5 stage;
+    class CLS,REG,KPS,NMS head;
